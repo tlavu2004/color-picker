@@ -38,7 +38,7 @@ There is no interface for browsing the 50 stored colors yet. Fifty is the curren
 
 Neither feature above is implemented in the current bug-fix branch.
 
-## Planned for a separate testing and CI PR
+## Implemented on ci/tests-and-coverage
 
 - Popup tests for color restoration, storage updates, and selection/cancellation interactions.
 - Clipboard tests for success, failure, button disabling, the two-second confirmation, and reset when changing colors.
@@ -47,7 +47,7 @@ Neither feature above is implemented in the current bug-fix branch.
 - Add GitHub Actions to run build, lint, and tests; agree on coverage configuration in that PR.
 - Continue checking the native EyeDropper in a real browser because mocks cannot replace that verification.
 
-The current baseline consists of six selection/storage tests, plus local build and lint commands. There is no CI workflow or coverage report yet.
+Vitest service/popup/clipboard tests, source-mapped V8 coverage, Node.js 22/24 GitHub Actions verification, artifact uploads, and tag-triggered release packaging are implemented on this independent branch. See [testing and delivery](TESTING.md). The separate feature branch changes history storage and UI; this branch retains the main baseline behavior.
 
 ## Future work, not scheduled for immediate implementation
 

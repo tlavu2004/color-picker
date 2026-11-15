@@ -1,0 +1,45 @@
+name: Release package
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run verify:build
+      - name: Verify release tag matches extension version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
+          assert.equal(process.env.RELEASE_TAG, `v${manifest.version}`, 'Update the manifest version before tagging a release');
+          NODE
+      - name: Package extension contents
+        working-directory: dist
+        run: zip -r ../color-picker-extension.zip .
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" color-picker-extension.zip --verify-tag --generate-notes
