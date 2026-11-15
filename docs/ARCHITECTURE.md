@@ -1,83 +1,83 @@
-# Kiến trúc Color Picker
+# Color Picker architecture
 
-Tài liệu này thay thế `color-picker-extension.txt`, phản ánh cấu trúc sau đợt sửa lỗi và dọn mã nguồn.
+This document replaces `color-picker-extension.txt` and describes the structure after the bug fixes and source cleanup.
 
-## Công nghệ
+## Technology
 
-- **Chrome Manifest V3**: khai báo extension, icon, popup và quyền.
-- **React 19 + TypeScript**: giao diện popup và logic ứng dụng.
-- **Vite 7**: dev server, biên dịch và đóng gói; không phải runtime nền của extension.
-- **EyeDropper API**: trình duyệt mở công cụ chọn pixel và trả màu sRGB HEX.
-- **Chrome Storage API**: lưu lịch sử màu trên máy người dùng.
-- **Clipboard API**: chỉ ghi vào clipboard khi người dùng bấm Copy.
+- **Chrome Manifest V3** declares the extension, icons, popup, and permissions.
+- **React 19 + TypeScript** implement the popup interface and application logic.
+- **Vite 7** provides the development server and production build; it is not an extension background runtime.
+- **EyeDropper API** opens the browser's native pixel picker and returns an sRGB HEX color.
+- **Chrome Storage API** stores color history locally.
+- **Clipboard API** writes to the clipboard only when the user clicks Copy.
 
-Không có background service worker hay content script ở phiên bản hiện tại. Những thành phần này trong bản phác thảo `.txt` cũ đã bị loại bỏ khi chuyển sang EyeDropper native.
+The current version has no background service worker or content script. Those components in the original text outline were removed when selection switched to the native EyeDropper.
 
-## Cấu trúc mã nguồn
+## Source layout
 
 ```text
 color-picker-extension/
 ├── public/
 │   ├── manifest.json
-│   └── icons/                    # Icon dùng bởi manifest
+│   └── icons/                    # Icons referenced by the manifest
 ├── src/
-│   ├── index.html                # HTML entry của popup
-│   ├── main.tsx                  # Mount React, bật StrictMode
+│   ├── index.html                # Popup HTML entry
+│   ├── main.tsx                  # Mounts React with StrictMode
 │   ├── components/
-│   │   ├── Popup.tsx             # Điều phối trạng thái và tương tác
-│   │   └── ColorResult.tsx       # Ô màu, HEX và nút Copy/Copied!
+│   │   ├── Popup.tsx             # Coordinates state and interactions
+│   │   └── ColorResult.tsx       # Color swatch, HEX, and Copy/Copied! button
 │   ├── styles/
-│   │   └── popup.css             # Style của popup
+│   │   └── popup.css             # Popup styles
 │   └── services/
-│       └── pickColor.ts          # Mở EyeDropper và lưu lịch sử
+│       └── pickColor.ts          # Opens EyeDropper and saves history
 ├── tests/
-│   └── pickColor.test.mjs         # Kiểm thử logic chọn/lưu bằng mock
+│   └── pickColor.test.mjs        # Selection/storage tests with mocks
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── FEATURES.md
-│   └── BACKLOG.md                # Điều tra và đề xuất phát triển
-├── README.md                     # Cài đặt, build và kiểm tra thủ công
+│   └── BACKLOG.md                # Investigations and development proposals
+├── README.md                     # Setup, build, and manual verification
 ├── vite.config.ts
 ├── tsconfig*.json
 └── package.json
 ```
 
-Ứng dụng hiện chỉ có một entry popup, nên `index.html` và `main.tsx` nằm trực tiếp trong `src/`, không thêm tầng `popup/`. Mã được chia theo vai trò: component trong `components/`, style trong `styles/`, logic chọn/lưu trong `services/`. Chưa tạo thư mục cho tính năng chưa tồn tại. `Popup.tsx` hiện vẫn quản lý storage subscription, clipboard và trạng thái UI vì phạm vi còn nhỏ.
+The application has a single popup entry, so `index.html` and `main.tsx` live directly in `src/` without an extra `popup/` directory. Code is grouped by responsibility: components in `components/`, styles in `styles/`, and selection/storage logic in `services/`. Directories are not created for unimplemented features. `Popup.tsx` still manages storage subscriptions, clipboard interactions, and UI state because the application is small.
 
-## Luồng hoạt động
+## Runtime flow
 
-1. Manifest mở `src/index.html` từ gói extension.
-2. `main.tsx` mount `Popup`. Popup đăng ký thay đổi storage và đọc màu gần nhất.
-3. Bấm Pick Color gọi `pickColor()`; EyeDropper được mở trước bất kỳ `await` nào để giữ user activation.
-4. Chọn một pixel: nhận HEX, chuyển chữ hoa, đọc lịch sử và lưu màu mới lên đầu. Màu trùng được loại bỏ; giữ tối đa 50 màu.
-5. Popup hiển thị màu vừa lưu. Mở lại popup đọc phần tử đầu tiên của lịch sử.
-6. Bấm Copy ghi HEX vào clipboard. Trong lúc ghi, nút bị khóa. Thành công thì nút hiện Copied! và khóa 2 giây; sau đó trở lại Copy. Không có thông báo Copied! riêng.
-7. Bắt đầu lượt chọn mới hoặc storage thay đổi sẽ xóa trạng thái xác nhận copy. Hủy bằng Esc không ghi màu và không thay đổi clipboard.
+1. The manifest opens `src/index.html` from the extension package.
+2. `main.tsx` mounts `Popup`, which subscribes to storage changes and loads the latest color.
+3. Clicking Pick Color calls `pickColor()`. EyeDropper opens before any `await` to preserve user activation.
+4. Selecting a pixel returns a HEX value. The service converts it to uppercase, reads history, and saves the selected color at the front. Duplicates are removed, and at most 50 colors are retained.
+5. The popup displays the saved color. Reopening the popup reads the first history entry.
+6. Clicking Copy writes the HEX value to the clipboard. The button is disabled while writing. On success, it displays Copied! and stays disabled for two seconds before returning to Copy. There is no separate Copied! message.
+7. Starting a new selection or receiving a color-history storage change clears the copy confirmation. Cancelling with Esc does not save a color or change the clipboard.
 
-Lỗi EyeDropper, storage và clipboard được hiển thị trong popup. Storage listener và timer xác nhận copy được dọn khi component unmount. Lịch sử hiện chỉ có UI cho màu mới nhất, chưa có lưới lịch sử.
+EyeDropper, storage, and clipboard errors are displayed in the popup. The storage listener and copy-confirmation timer are cleaned up when the component unmounts. Only the latest color has a visible result; there is no history grid yet.
 
-## Dữ liệu và quyền
+## Data and permissions
 
-`chrome.storage.local` lưu khóa `colors: string[]`, ví dụ `['#AABBCC', '#123456']`. Thứ tự mới nhất trước, tối đa 50 màu khác nhau; dữ liệu không được đồng bộ qua tài khoản hoặc gửi tới server.
+`chrome.storage.local` stores a `colors: string[]` key, for example `['#AABBCC', '#123456']`. Entries are ordered newest first, with at most 50 distinct colors. Data is not synchronized through an account or sent to a server.
 
-Manifest chỉ yêu cầu quyền `storage`. Không cần quyền website, `activeTab`, `scripting` hoặc chụp tab cho kiến trúc hiện tại. Chế độ chụp ảnh để chọn chính xác, nếu được triển khai sau, cần đánh giá lại quyền và phạm vi dữ liệu.
+The manifest requests only the `storage` permission. The current architecture does not require website access, `activeTab`, `scripting`, or tab capture. A future precision mode based on captured images would require another review of permissions and data scope.
 
-## Build và kiểm thử
+## Build and verification
 
-`npm run build` chạy TypeScript rồi Vite. Vite lấy `src/index.html` làm entry, xuất vào `dist/` và sao chép `public/`. Manifest trong `dist/` trỏ tới HTML entry tương ứng. Cài bằng Load unpacked thư mục `dist`, không phải `src`.
+`npm run build` runs TypeScript and then Vite. Vite uses `src/index.html` as its entry, writes output to `dist/`, and copies `public/`. The manifest in `dist/` points to the corresponding HTML entry. Use Load unpacked with `dist`, not `src`.
 
-`npm run dev` phục vụ giao diện tại `/src/index.html`; trang dev không thay thế môi trường extension có Chrome Storage API.
+`npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
 
-`npm test` dùng Node test runner, biên dịch module TypeScript trong bộ kiểm thử rồi thực thi trong VM có mock EyeDropper/storage. Hiện có 6 test logic. `npm run lint` kiểm tra mã TS/TSX. Chưa có CI, coverage hoặc test tích hợp popup; các phần đó thuộc PR sau.
+`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently six logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
 
-## Giới hạn
+## Limitations
 
-- Cần trình duyệt desktop hỗ trợ EyeDropper; UI báo lỗi nếu thiếu API.
-- Một lượt mở chọn một màu; chưa có chế độ liên tục.
-- Browser quản lý con trỏ/kính lúp; extension không nhận tọa độ hay sự kiện di chuột trong phiên native.
-- Kết quả là sRGB HEX của pixel hiển thị, không phải giá trị CSS hay pixel gốc trước zoom/compositing.
-- Test mock không chứng minh hành vi native; phải kiểm tra trực tiếp trong Chrome/Edge.
+- A desktop browser with EyeDropper support is required; the UI reports an error if the API is unavailable.
+- Each opening selects one color; continuous selection is not implemented.
+- The browser controls the cursor and magnifier. The extension does not receive pointer coordinates or movement events during native selection.
+- The result is the displayed pixel's sRGB HEX value, rather than a CSS declaration or an original image pixel before zoom/compositing.
+- Mock tests do not verify native behavior; manual Chrome/Edge checks are still required.
 
-Chi tiết điều tra DPI/scaling: [backlog](BACKLOG.md). Trạng thái sản phẩm: [chức năng](FEATURES.md).
+For DPI/scaling investigation details, see the [backlog](BACKLOG.md). For product status, see [features and plans](FEATURES.md).
 
-Tham khảo: [đặc tả EyeDropper](https://wicg.github.io/eyedropper-api/).
+Reference: [EyeDropper specification](https://wicg.github.io/eyedropper-api/).
