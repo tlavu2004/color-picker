@@ -14,7 +14,9 @@ npm run build
 1. Open `chrome://extensions` (or `edge://extensions`).
 2. Enable **Developer mode**, click **Load unpacked**, and select this project's `dist` directory.
 3. Open the extension popup and click **Pick Color**. Click a pixel to select it, or press **Esc** to cancel.
-4. The selected HEX value is saved and copying is attempted automatically. If clipboard access fails, use **Copy** in the popup. Reopening the popup restores the latest saved color.
+4. The selected HEX value is saved. Click **Copy** when you want to copy it; picking a color does not change the clipboard. Reopening the popup restores the latest saved color.
+
+Each click on **Pick Color** starts one selection. After selecting a pixel or cancelling with **Esc**, click **Pick Color** again for the next selection.
 
 After editing: run `npm run build`, reload the extension on the extensions page, and reopen the popup. When upgrading from the old version, also refresh existing web tabs to remove its injected picker and styles.
 

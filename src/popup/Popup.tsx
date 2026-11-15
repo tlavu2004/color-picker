@@ -33,11 +33,6 @@ const Popup: React.FC = () => {
       const selected = await pickColor();
       if (selected) {
         setColor(selected);
-        try {
-          await navigator.clipboard.writeText(selected);
-        } catch {
-          setError('Color saved. Use Copy to copy it to the clipboard.');
-        }
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Could not pick or save the color.');
