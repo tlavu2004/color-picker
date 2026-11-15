@@ -1,5 +1,5 @@
 .popup-container {
-  width: 200px;
+  width: 260px;
   padding: 10px;
   font-family: sans-serif;
   text-align: center;
@@ -23,7 +23,7 @@ button {
 }
 
 .copy-button {
-  width: 76px;
+  width: 92px;
   flex-shrink: 0;
 }
 
@@ -37,4 +37,18 @@ button:disabled {
   height: 24px;
   border-radius: 4px;
   border: 1px solid #ddd;
+}
+
+.language-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.language-setting select {
+  padding: 4px;
+  max-width: 150px;
 }
