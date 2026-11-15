@@ -50,4 +50,4 @@ Only the `storage` extension permission is requested. No content script, backgro
 
 - [Architecture and source layout](docs/ARCHITECTURE.md)
 - [Existing features and planned work](docs/FEATURES.md)
-- [Precision selection investigation backlog](docs/planning/BACKLOG.md)
+- [Precision selection investigation backlog](docs/BACKLOG.md)

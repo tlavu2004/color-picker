@@ -57,7 +57,7 @@ Người dùng quan sát con trỏ có vẻ bỏ qua một số pixel. Chưa xá
 
 Phương án cần nghiên cứu: chế độ riêng chụp tab, phóng đại với lưới pixel, phím mũi tên di chuyển từng pixel ảnh. Cần cân nhắc quyền, ánh xạ tọa độ và hạn chế ảnh đóng băng. Giữ native làm mặc định nếu thêm chế độ này.
 
-Xem [backlog điều tra và tiêu chí nghiệm thu](planning/BACKLOG.md).
+Xem [backlog điều tra và tiêu chí nghiệm thu](BACKLOG.md).
 
 ## Phạm vi nhánh hiện tại
 

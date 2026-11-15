@@ -35,8 +35,7 @@ color-picker-extension/
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── FEATURES.md
-│   └── planning/
-│       └── BACKLOG.md            # Điều tra và đề xuất phát triển
+│   └── BACKLOG.md                # Điều tra và đề xuất phát triển
 ├── README.md                     # Cài đặt, build và kiểm tra thủ công
 ├── vite.config.ts
 ├── tsconfig*.json
@@ -79,6 +78,6 @@ Manifest chỉ yêu cầu quyền `storage`. Không cần quyền website, `acti
 - Kết quả là sRGB HEX của pixel hiển thị, không phải giá trị CSS hay pixel gốc trước zoom/compositing.
 - Test mock không chứng minh hành vi native; phải kiểm tra trực tiếp trong Chrome/Edge.
 
-Chi tiết điều tra DPI/scaling: [backlog](planning/BACKLOG.md). Trạng thái sản phẩm: [chức năng](FEATURES.md).
+Chi tiết điều tra DPI/scaling: [backlog](BACKLOG.md). Trạng thái sản phẩm: [chức năng](FEATURES.md).
 
 Tham khảo: [đặc tả EyeDropper](https://wicg.github.io/eyedropper-api/).
