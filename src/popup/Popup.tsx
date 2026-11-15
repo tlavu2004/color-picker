@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './popup.css';
-import { pickColor } from './pickColor';
+import { pickColor } from './services/pickColor';
+import { ColorResult } from './components/ColorResult';
 
 const Popup: React.FC = () => {
   const [color, setColor] = useState<string | null>(null);
@@ -74,13 +75,7 @@ const Popup: React.FC = () => {
       {error && <p role="alert">{error}</p>}
 
       {color && (
-        <div className="color-result">
-          <div className="color-box" style={{ backgroundColor: color }} />
-          <span>{color}</span>
-          <button className="copy-button" onClick={handleCopy} disabled={copying || copied} aria-live="polite">
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
+        <ColorResult color={color} copying={copying} copied={copied} onCopy={handleCopy} />
       )}
     </div>
   );
