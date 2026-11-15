@@ -56,18 +56,24 @@ function onClick(e: MouseEvent) {
     const colors = res.colors as string[];
     chrome.storage.local.set({ colors: [hex, ...colors.filter(c => c !== hex)].slice(0, 50) }); // max 50 colors
   });
+  stopPicker();
 }
 
 function startPicker() {
   if (!overlay) createOverlay();
   document.addEventListener('mousemove', onMove);
   document.addEventListener('click', onClick, true);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopPicker(); });
+  document.addEventListener('keydown', onKeyDown);
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') stopPicker();
 }
 
 function stopPicker() {
   document.removeEventListener('mousemove', onMove);
   document.removeEventListener('click', onClick, true);
+  document.removeEventListener('keydown', onKeyDown);
   if (overlay) overlay.remove();
   overlay = null!;
 }
