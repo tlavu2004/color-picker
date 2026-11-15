@@ -6,11 +6,19 @@ const Popup: React.FC = () => {
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [picking, setPicking] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [copied]);
 
   useEffect(() => {
     let active = true;
     const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
       if (area === 'local' && changes.colors) {
+        setCopied(false);
         setColor(changes.colors.newValue?.[0] ?? null);
       }
     };
@@ -27,6 +35,7 @@ const Popup: React.FC = () => {
   }, []);
 
   const handlePickColor = async () => {
+    setCopied(false);
     setError('');
     setPicking(true);
     try {
@@ -43,9 +52,11 @@ const Popup: React.FC = () => {
 
   const handleCopy = async () => {
     if (!color) return;
+    setCopied(false);
     setError('');
     try {
       await navigator.clipboard.writeText(color);
+      setCopied(true);
     } catch {
       setError('Could not copy the color. Please try again.');
     }
@@ -58,6 +69,7 @@ const Popup: React.FC = () => {
         {picking ? 'Picking…' : 'Pick Color'}
       </button>
       {error && <p role="alert">{error}</p>}
+      <div role="status" aria-live="polite">{copied ? 'Copied!' : ''}</div>
 
       {color && (
         <div className="color-result">
