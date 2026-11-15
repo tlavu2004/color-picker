@@ -21,15 +21,15 @@ color-picker-extension/
 │   ├── manifest.json
 │   └── icons/                    # Icon dùng bởi manifest
 ├── src/
-│   └── popup/
-│       ├── index.html            # HTML entry của popup
-│       ├── main.tsx              # Mount React, bật StrictMode
-│       ├── Popup.tsx             # Điều phối trạng thái và tương tác
-│       ├── popup.css             # Style của popup
-│       ├── components/
-│       │   └── ColorResult.tsx    # Ô màu, HEX và nút Copy/Copied!
-│       └── services/
-│           └── pickColor.ts      # Mở EyeDropper và lưu lịch sử
+│   ├── index.html                # HTML entry của popup
+│   ├── main.tsx                  # Mount React, bật StrictMode
+│   ├── components/
+│   │   ├── Popup.tsx             # Điều phối trạng thái và tương tác
+│   │   └── ColorResult.tsx       # Ô màu, HEX và nút Copy/Copied!
+│   ├── styles/
+│   │   └── popup.css             # Style của popup
+│   └── services/
+│       └── pickColor.ts          # Mở EyeDropper và lưu lịch sử
 ├── tests/
 │   └── pickColor.test.mjs         # Kiểm thử logic chọn/lưu bằng mock
 ├── docs/
@@ -43,11 +43,11 @@ color-picker-extension/
 └── package.json
 ```
 
-Giữ entry của popup trong cùng thư mục với giao diện. Component trình bày nằm trong `components/`; logic chọn/lưu nằm trong `services/`. Chưa tạo tầng dùng chung hoặc thư mục cho tính năng chưa tồn tại. `Popup.tsx` hiện vẫn quản lý storage subscription, clipboard và trạng thái UI vì phạm vi còn nhỏ.
+Ứng dụng hiện chỉ có một entry popup, nên `index.html` và `main.tsx` nằm trực tiếp trong `src/`, không thêm tầng `popup/`. Mã được chia theo vai trò: component trong `components/`, style trong `styles/`, logic chọn/lưu trong `services/`. Chưa tạo thư mục cho tính năng chưa tồn tại. `Popup.tsx` hiện vẫn quản lý storage subscription, clipboard và trạng thái UI vì phạm vi còn nhỏ.
 
 ## Luồng hoạt động
 
-1. Manifest mở `src/popup/index.html` từ gói extension.
+1. Manifest mở `src/index.html` từ gói extension.
 2. `main.tsx` mount `Popup`. Popup đăng ký thay đổi storage và đọc màu gần nhất.
 3. Bấm Pick Color gọi `pickColor()`; EyeDropper được mở trước bất kỳ `await` nào để giữ user activation.
 4. Chọn một pixel: nhận HEX, chuyển chữ hoa, đọc lịch sử và lưu màu mới lên đầu. Màu trùng được loại bỏ; giữ tối đa 50 màu.
@@ -65,9 +65,9 @@ Manifest chỉ yêu cầu quyền `storage`. Không cần quyền website, `acti
 
 ## Build và kiểm thử
 
-`npm run build` chạy TypeScript rồi Vite. Vite lấy `src/popup/index.html` làm entry, xuất vào `dist/` và sao chép `public/`. Manifest trong `dist/` trỏ tới HTML entry tương ứng. Cài bằng Load unpacked thư mục `dist`, không phải `src`.
+`npm run build` chạy TypeScript rồi Vite. Vite lấy `src/index.html` làm entry, xuất vào `dist/` và sao chép `public/`. Manifest trong `dist/` trỏ tới HTML entry tương ứng. Cài bằng Load unpacked thư mục `dist`, không phải `src`.
 
-`npm run dev` phục vụ giao diện tại `/src/popup/index.html`; trang dev không thay thế môi trường extension có Chrome Storage API.
+`npm run dev` phục vụ giao diện tại `/src/index.html`; trang dev không thay thế môi trường extension có Chrome Storage API.
 
 `npm test` dùng Node test runner, biên dịch module TypeScript trong bộ kiểm thử rồi thực thi trong VM có mock EyeDropper/storage. Hiện có 6 test logic. `npm run lint` kiểm tra mã TS/TSX. Chưa có CI, coverage hoặc test tích hợp popup; các phần đó thuộc PR sau.
 

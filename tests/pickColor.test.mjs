@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 
-const source = readFileSync(new URL('../src/popup/services/pickColor.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../src/services/pickColor.ts', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;

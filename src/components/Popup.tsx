@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import './popup.css';
-import { pickColor } from './services/pickColor';
-import { ColorResult } from './components/ColorResult';
+import '../styles/popup.css';
+import { pickColor } from '../services/pickColor';
+import { ColorResult } from './ColorResult';
 
 const Popup: React.FC = () => {
   const [color, setColor] = useState<string | null>(null);

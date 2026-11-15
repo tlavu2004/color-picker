@@ -20,7 +20,7 @@ Each click on **Pick Color** starts one selection. After selecting a pixel or ca
 
 After editing: run `npm run build`, reload the extension on the extensions page, and reopen the popup. When upgrading from the old version, also refresh existing web tabs to remove its injected picker and styles.
 
-`npm run dev` serves the popup at `/src/popup/index.html` for layout work; extension storage requires loading the built extension.
+`npm run dev` serves the popup at `/src/index.html` for layout work; extension storage requires loading the built extension.
 
 ## Checks
 
