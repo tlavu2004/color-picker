@@ -16,7 +16,7 @@ Continuous selection, a recent-color interface, and a precision mode are not imp
 
 ## Run locally
 
-Use Node.js 22.12 or later (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
+Use Node.js 22.22.2+ or 24.15.0+ (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
 
 From the repository root:
 

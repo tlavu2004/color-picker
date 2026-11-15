@@ -2,7 +2,7 @@
 
 ## Local checks
 
-Use Node.js 22.12+ or Node.js 24. Install the locked dependencies with `npm ci`, then run:
+Use Node.js 22.22.2+ or 24.15.0+. Install the locked dependencies with `npm ci`, then run:
 
 ```powershell
 npm run lint
@@ -46,9 +46,9 @@ These workflow definitions are validated locally; hosted runner results become a
 
 ## Integrating the independent branches
 
-Both `feat/color-history` and `ci/tests-and-coverage` start at main commit `a069d30`. The CI branch tests the baseline with its 50-color storage bound. Its bounded-history contract also accepts the feature's stricter ten-color bound; the feature branch supplies explicit ten-color and migration tests in the old Node harness.
+Both `feat/color-history` and `ci/tests-and-coverage` start at main commit `a069d30`. The CI branch tests the baseline with its 50-color storage bound. Its bounded-history contract also accepts the feature's stricter ten-color bound. Five additional integration cases activate automatically when the feature exports are present; on the baseline they are explicitly skipped. They cover ten-color migration, swatch selection, repicking, clearing, and failure/operation states.
 
-When merging both branches, retain the feature's service and UI changes. Remove the old `tests/pickColor.test.mjs` if Git reports a modify/delete conflict; port its history-migration and clear-history cases to Vitest and add grid interactions. The old VM harness is not part of the new `npm test` command. Then rerun all checks above against the combined code. README and feature-status documentation may also require combining their independent edits.
+When merging both branches, retain the feature's service and UI changes. Remove the old `tests/pickColor.test.mjs` if Git reports a modify/delete conflict; retain the Vitest history integration cases, which already cover migration, clear history, and grid interactions. The old VM harness is not part of the new `npm test` command. Local integration validation with the feature source passed all 21 tests, test typechecking, build, and asset verification. Coverage for that combined source was 100% lines and 94.2% branches (the mounting entry is excluded). Then rerun all checks above against the final merged code. README and feature-status documentation may also require combining their independent edits.
 
 ## Dependency audit
 

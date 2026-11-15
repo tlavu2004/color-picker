@@ -40,14 +40,12 @@ Neither feature above is implemented in the current bug-fix branch.
 
 ## Implemented on ci/tests-and-coverage
 
-- Popup tests for color restoration, storage updates, and selection/cancellation interactions.
-- Clipboard tests for success, failure, button disabling, the two-second confirmation, and reset when changing colors.
-- Adjust the test setup so coverage maps correctly to TypeScript source rather than relying only on a module executed in a VM.
-- Introduce coverage reporting first, without a mandatory threshold or treating a percentage as a substitute for behavior checks.
-- Add GitHub Actions to run build, lint, and tests; agree on coverage configuration in that PR.
-- Continue checking the native EyeDropper in a real browser because mocks cannot replace that verification.
-
-Vitest service/popup/clipboard tests, source-mapped V8 coverage, Node.js 22/24 GitHub Actions verification, artifact uploads, and tag-triggered release packaging are implemented on this independent branch. See [testing and delivery](TESTING.md). The separate feature branch changes history storage and UI; this branch retains the main baseline behavior.
+- Vitest and React Testing Library cover service, popup restoration, storage updates, selection/cancellation/retry, clipboard failures, pending operations, copy feedback, and cleanup.
+- V8 coverage maps to application TypeScript, excluding only the mounting entry; reports are informational with no minimum percentage gate.
+- GitHub Actions runs verification on Node.js 22/24 and uploads coverage and unpacked extension artifacts.
+- Version tags trigger verified ZIP packaging and GitHub release publication. Chrome Web Store deployment is not configured.
+- Five feature-integration tests activate when the independent history feature is present. They are explicitly skipped on this baseline, which still stores 50 colors.
+- Native browser checks remain necessary. See [testing and delivery](TESTING.md).
 
 ## Future work, not scheduled for immediate implementation
 
@@ -59,8 +57,8 @@ A possible approach is a separate mode using a captured tab image, a magnified p
 
 See the [investigation backlog and acceptance criteria](BACKLOG.md).
 
-## Current branch scope
+## Baseline and independent branches
 
-The `fix/color-picker-bugs` branch fixes picker, storage, popup, clipboard, and copy-feedback issues. It also includes the requested source and documentation cleanup. History UI, continuous selection, precision selection, and CI/coverage are recorded only and are not implemented in this work.
+The merged `main` baseline at `a069d30` includes picker/storage/popup fixes, explicit clipboard behavior, copy feedback, and source/documentation cleanup. `ci/tests-and-coverage` adds test and delivery tooling without changing product behavior. `feat/color-history` independently adds the ten-color history UI and its roadmap.
 
-After merging the current branch, create each PR branch from the updated `main`. Proposed names are `feat/color-history` and `ci/tests-and-coverage`. Finalize the continuous-selection scope after its feasibility investigation.
+Both current branches start from the same main commit; see the integration guidance in TESTING.md. Precision selection remains outside their implementation scope.
