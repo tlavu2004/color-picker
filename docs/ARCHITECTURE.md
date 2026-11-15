@@ -1,83 +1,47 @@
 # Color Picker architecture
 
-This document replaces `color-picker-extension.txt` and describes the structure after the bug fixes and source cleanup.
+## Stack and entries
 
-## Technology
+Chrome Manifest V3 packages React 19 + TypeScript interfaces, built with Vite 7. Vite is a development/build tool, not the extension runtime. This branch has two trusted extension entries:
 
-- **Chrome Manifest V3** declares the extension, icons, popup, and permissions.
-- **React 19 + TypeScript** implement the popup interface and application logic.
-- **Vite 7** provides the development server and production build; it is not an extension background runtime.
-- **EyeDropper API** opens the browser's native pixel picker and returns an sRGB HEX color.
-- **Chrome Storage API** stores color history locally.
-- **Clipboard API** writes to the clipboard only when the user clicks Copy.
+- `src/index.html` → `src/main.tsx` → `components/Popup.tsx`.
+- `src/snapshot/index.html` → `snapshot/main.tsx` → `snapshot/SnapshotPicker.tsx`.
 
-The current version has no background service worker or content script. Those components in the original text outline were removed when selection switched to the native EyeDropper.
+There is no content script, background service worker, or broad host access. The manifest requests storage and activeTab. Chrome 112+ is required for the session-storage quota used by screenshot transfer.
 
-## Source layout
+## Source responsibilities
 
-```text
-color-picker-extension/
-├── public/
-│   ├── manifest.json
-│   └── icons/                    # Icons referenced by the manifest
-├── src/
-│   ├── index.html                # Popup HTML entry
-│   ├── main.tsx                  # Mounts React with StrictMode
-│   ├── components/
-│   │   ├── Popup.tsx             # Coordinates state and interactions
-│   │   └── ColorResult.tsx       # Color swatch, HEX, and Copy/Copied! button
-│   ├── styles/
-│   │   └── popup.css             # Popup styles
-│   └── services/
-│       └── pickColor.ts          # Opens EyeDropper and saves history
-├── tests/
-│   └── pickColor.test.mjs        # Selection/storage tests with mocks
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── FEATURES.md
-│   └── BACKLOG.md                # Investigations and development proposals
-├── README.md                     # Setup, build, and manual verification
-├── vite.config.ts
-├── tsconfig*.json
-└── package.json
-```
+- `src/components/`: popup coordination and color result UI.
+- `src/styles/`: popup CSS.
+- `src/services/pickColor.ts`: native EyeDropper and shared ten-color storage (normalization, legacy migration, save, clear).
+- `src/services/snapshot.ts`: capture source checks, temporary screenshot transfer, session consumption and selection-window creation.
+- `src/snapshot/`: persistent snapshot-selection window, coordinate conversion, and its styles.
+- `tests/`: Vitest service, popup, snapshot, and coordinate tests with mocked browser APIs.
+- `scripts/verify-build.mjs`: verifies the popup, icons, and assets for all built HTML entries.
+- `docs/`: feature status, architecture, snapshot guide, and the future precision investigation backlog.
 
-The application has a single popup entry, so `index.html` and `main.tsx` live directly in `src/` without an extra `popup/` directory. Code is grouped by responsibility: components in `components/`, styles in `styles/`, and selection/storage logic in `services/`. Directories are not created for unimplemented features. `Popup.tsx` still manages storage subscriptions, clipboard interactions, and UI state because the application is small.
+## Native flow
 
-## Runtime flow
+Pick Color calls EyeDropper synchronously within the button interaction. One selected sRGB HEX value is normalized and saved; Esc cancels without changing colors or clipboard. The popup restores the latest stored color and subscribes to local changes. Copy is explicit with a two-second disabled Copied! confirmation. Listeners and timers are cleaned up on unmount.
 
-1. The manifest opens `src/index.html` from the extension package.
-2. `main.tsx` mounts `Popup`, which subscribes to storage changes and loads the latest color.
-3. Clicking Pick Color calls `pickColor()`. EyeDropper opens before any `await` to preserve user activation.
-4. Selecting a pixel returns a HEX value. The service converts it to uppercase, reads history, and saves the selected color at the front. Duplicates are removed, and at most 50 colors are retained.
-5. The popup displays the saved color. Reopening the popup reads the first history entry.
-6. Clicking Copy writes the HEX value to the clipboard. The button is disabled while writing. On success, it displays Copied! and stays disabled for two seconds before returning to Copy. There is no separate Copied! message.
-7. Starting a new selection or receiving a color-history storage change clears the copy confirmation. Cancelling with Esc does not save a color or change the clipboard.
+## Continuous snapshot flow
 
-EyeDropper, storage, and clipboard errors are displayed in the popup. The storage listener and copy-confirmation timer are cleaned up when the component unmounts. Only the latest color has a visible result; there is no history grid yet.
+The checkbox defaults off. When enabled, capture the active source tab before creating a separate extension window. Transfer the PNG and source identity through a random key in in-memory session storage. The new window consumes/deletes that transfer, draws the image on a canvas at its actual pixel dimensions, and maps displayed click coordinates to captured pixel coordinates.
 
-## Data and permissions
+Each completed click uses the shared save operation, retains the session, and updates recent colors. An operation guard prevents overlapping writes. Esc/Stop releases image state and clears the canvas; previously selected colors remain available for explicit copy. Refresh captures only the original source window when its active tab still matches the recorded source tab.
 
-`chrome.storage.local` stores a `colors: string[]` key, for example `['#AABBCC', '#123456']`. Entries are ordered newest first, with at most 50 distinct colors. Data is not synchronized through an account or sent to a server.
+Snapshot loading intentionally does not use StrictMode's development double effect, because the transfer is single-use. Async image callbacks and session state updates are guarded against unmount/stop.
 
-The manifest requests only the `storage` permission. The current architecture does not require website access, `activeTab`, `scripting`, or tab capture. A future precision mode based on captured images would require another review of permissions and data scope.
+## Storage and lifecycle
 
-## Build and verification
+`chrome.storage.local.colors` contains at most ten distinct uppercase HEX values, newest first. Reading the history service normalizes legacy entries and trims old 50-color history. Native and snapshot selection share the same save function. Images are never placed in local color history.
 
-`npm run build` runs TypeScript and then Vite. Vite uses `src/index.html` as its entry, writes output to `dist/`, and copies `public/`. The manifest in `dist/` points to the corresponding HTML entry. Use Load unpacked with `dist`, not `src`.
+A `color-picker-snapshot:<uuid>` entry in `storage.session` contains a PNG, source IDs/title, and capture time. It is removed on successful load, removed when window creation fails, rejected after five minutes, and pruned on later capture. No background expiry job or server upload is used. Very large PNGs may exceed session quota and produce a visible error.
 
-`npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
+## Build and tests
 
-`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently six logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
+Run `npm run build` to typecheck and build both entries into `dist/`; install `dist/` with Load unpacked. Run `npm run verify:build` to verify entry assets. Vite dev pages alone do not provide extension storage/capture permissions.
 
-## Limitations
+Vitest and React Testing Library use jsdom and mocked APIs. Run `npm run test:typecheck`, `npm run lint`, `npm test`, and `npm run test:coverage`. Coverage excludes only the two mounting entries; there is no percentage gate. Native picking and real tab capture still require manual browser verification.
 
-- A desktop browser with EyeDropper support is required; the UI reports an error if the API is unavailable.
-- Each opening selects one color; continuous selection is not implemented.
-- The browser controls the cursor and magnifier. The extension does not receive pointer coordinates or movement events during native selection.
-- The result is the displayed pixel's sRGB HEX value, rather than a CSS declaration or an original image pixel before zoom/compositing.
-- Mock tests do not verify native behavior; manual Chrome/Edge checks are still required.
-
-For DPI/scaling investigation details, see the [backlog](BACKLOG.md). For product status, see [features and plans](FEATURES.md).
-
-Reference: [EyeDropper specification](https://wicg.github.io/eyedropper-api/).
+See [continuous selection](CONTINUOUS_SELECTION.md) for behavior, permissions, limitations, and checks. [Feature status](FEATURES.md) distinguishes independent PRs. [Precision investigation](BACKLOG.md) remains future work.
