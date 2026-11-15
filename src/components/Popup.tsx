@@ -87,7 +87,7 @@ const Popup: React.FC = () => {
   };
 
   const handleCopy = async () => {
-    if (!color || copying || copied) return;
+    if (!color || copying || copied || picking || clearing || loading) return;
     setCopying(true);
     setError('');
     try {
@@ -109,7 +109,7 @@ const Popup: React.FC = () => {
       {error && <p role="alert">{error}</p>}
 
       {color && (
-        <ColorResult color={color} copying={copying} copied={copied} onCopy={handleCopy} />
+        <ColorResult color={color} copying={copying} copied={copied} disabled={picking || clearing || loading} onCopy={handleCopy} />
       )}
       <ColorHistory colors={colors} selected={color} disabled={loading || picking || copying || clearing} onSelect={handleSelectColor} onClear={handleClearHistory} />
     </div>
