@@ -1,3 +1,6 @@
+(() => {
+const pickerWindow = window as Window & { stopColorPicker?: () => void };
+pickerWindow.stopColorPicker?.();
 const toHex = (r: number, g: number, b: number) =>
   '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
 
@@ -78,4 +81,6 @@ function stopPicker() {
   overlay = null!;
 }
 
+pickerWindow.stopColorPicker = stopPicker;
 startPicker();
+})();
