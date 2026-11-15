@@ -64,3 +64,7 @@ See the [investigation backlog and acceptance criteria](BACKLOG.md).
 The `fix/color-picker-bugs` branch fixes picker, storage, popup, clipboard, and copy-feedback issues. It also includes the requested source and documentation cleanup. History UI, continuous selection, precision selection, and CI/coverage are recorded only and are not implemented in this work.
 
 After merging the current branch, create each PR branch from the updated `main`. Proposed names are `feat/color-history` and `ci/tests-and-coverage`. Finalize the continuous-selection scope after its feasibility investigation.
+
+## Implemented independently: localization
+
+The feat/localization branch adds Auto / English / Tiếng Việt, persisted preference, translated labels/errors/copy feedback, and language tests. See [localization](LOCALIZATION.md). It starts from main and does not include other feature branches.

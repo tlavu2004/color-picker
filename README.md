@@ -2,6 +2,10 @@
 
 A Chrome Manifest V3 extension built with React 19 and TypeScript, using Vite 7 for development and production builds. It samples a screen pixel with the browser's native EyeDropper and saves its sRGB HEX value locally.
 
+## Localization
+
+Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/LOCALIZATION.md).
+
 ## Current features
 
 - Select one pixel per click on **Pick Color**, including displayed colors from images, gradients, and composited transparency.
@@ -16,7 +20,7 @@ Continuous selection, a recent-color interface, and a precision mode are not imp
 
 ## Run locally
 
-Use Node.js 22.12 or later (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
+Use Node.js 22.22.2+ or 24.15.0+ (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
 
 From the repository root:
 
@@ -43,7 +47,7 @@ After editing, run `npm run build`, click **Reload** on the extension's card, an
 | `npm run build` | Check TypeScript and build the unpacked extension into `dist/` |
 | `npm run preview` | Serve the production build for layout inspection at `/src/index.html` |
 | `npm run lint` | Lint TypeScript and TSX source |
-| `npm test` | Run the six selection/storage logic tests |
+| `npm test` | Run native selection and localization tests |
 
 The dev and preview pages do not provide the extension's Chrome Storage API. Use the built extension loaded from `dist/` to verify selection, persistence, and clipboard behavior together. Vite is a build/development tool; no Vite server is needed to use the installed extension.
 
@@ -93,6 +97,7 @@ The browser controls the native magnifier and pointer movement. Precision concer
 
 ## Documentation
 
+- [Localization behavior and verification](docs/LOCALIZATION.md)
 - [Architecture and source layout](docs/ARCHITECTURE.md)
 - [Existing features and planned work](docs/FEATURES.md)
 - [Precision selection investigation backlog](docs/BACKLOG.md)
