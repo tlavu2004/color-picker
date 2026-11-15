@@ -31,14 +31,21 @@ color-picker-extension/
 │   └── services/
 │       └── pickColor.ts          # Opens EyeDropper and saves history
 ├── tests/
-│   └── pickColor.test.mjs        # Service and popup tests with mocks
+│   ├── pickColor.test.ts         # Native selection and storage tests
+│   ├── Popup.test.tsx            # Popup and clipboard interactions
+│   ├── history.integration.test.tsx # Runs when history feature is present
+│   ├── browserMocks.ts           # Browser API mocks
+│   └── setup.ts                  # DOM matchers and cleanup
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── FEATURES.md
-│   ├── TESTING.md               # Local checks, CI, and release packaging
+│   ├── TESTING.md                # Local checks, CI, and release packaging
 │   └── BACKLOG.md                # Investigations and development proposals
 ├── README.md                     # Setup, build, and manual verification
 ├── vite.config.ts
+├── vitest.config.ts
+├── scripts/verify-build.mjs      # Verifies the built extension's asset paths
+├── .github/workflows/            # CI and tag-triggered release packaging
 ├── tsconfig*.json
 └── package.json
 ```
