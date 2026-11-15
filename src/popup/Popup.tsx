@@ -7,6 +7,7 @@ const Popup: React.FC = () => {
   const [error, setError] = useState('');
   const [picking, setPicking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -51,14 +52,16 @@ const Popup: React.FC = () => {
   };
 
   const handleCopy = async () => {
-    if (!color) return;
-    setCopied(false);
+    if (!color || copying || copied) return;
+    setCopying(true);
     setError('');
     try {
       await navigator.clipboard.writeText(color);
       setCopied(true);
     } catch {
       setError('Could not copy the color. Please try again.');
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -69,13 +72,14 @@ const Popup: React.FC = () => {
         {picking ? 'Picking…' : 'Pick Color'}
       </button>
       {error && <p role="alert">{error}</p>}
-      <div role="status" aria-live="polite">{copied ? 'Copied!' : ''}</div>
 
       {color && (
         <div className="color-result">
           <div className="color-box" style={{ backgroundColor: color }} />
           <span>{color}</span>
-          <button onClick={handleCopy}>Copy</button>
+          <button className="copy-button" onClick={handleCopy} disabled={copying || copied} aria-live="polite">
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
         </div>
       )}
     </div>
