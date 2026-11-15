@@ -9,10 +9,10 @@ A Chrome Manifest V3 extension built with React 19 and TypeScript, using Vite 7 
 - View a color swatch and uppercase HEX value; reopening the popup restores the latest color.
 - Click **Copy** to write the HEX value to the clipboard. Selection never copies automatically.
 - The Copy button is disabled while writing. On success, it displays **Copied!** and stays disabled for two seconds before returning to **Copy**. Starting a new selection clears the confirmation.
-- Retain up to 50 distinct colors locally, newest first. Selecting an existing color moves it to the front. Only the latest color is currently displayed; there is no history grid or clear-history action yet.
+- Retain up to 10 distinct colors locally, newest first. Selecting an existing color moves it to the front. The recent-color grid lets you view an earlier color without copying; Clear history removes saved colors. Legacy history is reduced to the newest ten entries when loaded.
 - Display errors when selection, storage, or clipboard operations fail, or when EyeDropper is unavailable.
 
-Continuous selection, a recent-color interface, and a precision mode are not implemented. See [features and plans](docs/FEATURES.md) for their status.
+Continuous selection and precision mode are not implemented. Localization is proposed for step 3. See [features and plans](docs/FEATURES.md) for their status.
 
 ## Run locally
 
@@ -43,7 +43,7 @@ After editing, run `npm run build`, click **Reload** on the extension's card, an
 | `npm run build` | Check TypeScript and build the unpacked extension into `dist/` |
 | `npm run preview` | Serve the production build for layout inspection at `/src/index.html` |
 | `npm run lint` | Lint TypeScript and TSX source |
-| `npm test` | Run the six selection/storage logic tests |
+| `npm test` | Run the eight selection/storage logic tests |
 
 The dev and preview pages do not provide the extension's Chrome Storage API. Use the built extension loaded from `dist/` to verify selection, persistence, and clipboard behavior together. Vite is a build/development tool; no Vite server is needed to use the installed extension.
 
@@ -55,6 +55,7 @@ src/
 ├── main.tsx
 ├── components/
 │   ├── Popup.tsx
+│   ├── ColorHistory.tsx
 │   └── ColorResult.tsx
 ├── styles/
 │   └── popup.css
@@ -72,7 +73,7 @@ npm run lint
 npm test
 ```
 
-The six automated tests use mocked EyeDropper and storage APIs. They check that opening is requested synchronously, HEX normalization, deduplication, the 50-color limit, cancellation, unsupported browsers, and selection/storage failures. They do not prove browser user-activation behavior or native picker operation. Popup/clipboard tests, coverage reporting, and CI are planned for a separate PR.
+The eight automated tests use mocked EyeDropper and storage APIs. They check that opening is requested synchronously, HEX normalization, deduplication, the 10-color limit and legacy migration, cancellation, unsupported browsers, and selection/storage failures. They do not prove browser user-activation behavior or native picker operation. Popup/clipboard tests, coverage reporting, and CI are planned for a separate PR.
 
 Manual review in the loaded extension:
 

@@ -25,6 +25,7 @@ color-picker-extension/
 │   ├── main.tsx                  # Mounts React with StrictMode
 │   ├── components/
 │   │   ├── Popup.tsx             # Coordinates state and interactions
+│   │   ├── ColorHistory.tsx      # Recent-color grid and clear action
 │   │   └── ColorResult.tsx       # Color swatch, HEX, and Copy/Copied! button
 │   ├── styles/
 │   │   └── popup.css             # Popup styles
@@ -49,16 +50,16 @@ The application has a single popup entry, so `index.html` and `main.tsx` live di
 1. The manifest opens `src/index.html` from the extension package.
 2. `main.tsx` mounts `Popup`, which subscribes to storage changes and loads the latest color.
 3. Clicking Pick Color calls `pickColor()`. EyeDropper opens before any `await` to preserve user activation.
-4. Selecting a pixel returns a HEX value. The service converts it to uppercase, reads history, and saves the selected color at the front. Duplicates are removed, and at most 50 colors are retained.
+4. Selecting a pixel returns a HEX value. The service converts it to uppercase, reads history, and saves the selected color at the front. Duplicates are removed, and at most 10 colors are retained.
 5. The popup displays the saved color. Reopening the popup reads the first history entry.
 6. Clicking Copy writes the HEX value to the clipboard. The button is disabled while writing. On success, it displays Copied! and stays disabled for two seconds before returning to Copy. There is no separate Copied! message.
 7. Starting a new selection or receiving a color-history storage change clears the copy confirmation. Cancelling with Esc does not save a color or change the clipboard.
 
-EyeDropper, storage, and clipboard errors are displayed in the popup. The storage listener and copy-confirmation timer are cleaned up when the component unmounts. Only the latest color has a visible result; there is no history grid yet.
+EyeDropper, storage, and clipboard errors are displayed in the popup. The storage listener and copy-confirmation timer are cleaned up when the component unmounts. The recent-color grid displays up to ten stored colors; selecting a swatch changes the visible result without copying. Clear history persists an empty list. Legacy history is normalized and trimmed to ten entries on load.
 
 ## Data and permissions
 
-`chrome.storage.local` stores a `colors: string[]` key, for example `['#AABBCC', '#123456']`. Entries are ordered newest first, with at most 50 distinct colors. Data is not synchronized through an account or sent to a server.
+`chrome.storage.local` stores a `colors: string[]` key, for example `['#AABBCC', '#123456']`. Entries are ordered newest first, with at most 10 distinct colors. Data is not synchronized through an account or sent to a server.
 
 The manifest requests only the `storage` permission. The current architecture does not require website access, `activeTab`, `scripting`, or tab capture. A future precision mode based on captured images would require another review of permissions and data scope.
 
@@ -68,7 +69,7 @@ The manifest requests only the `storage` permission. The current architecture do
 
 `npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
 
-`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently six logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
+`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently eight logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
 
 ## Limitations
 
