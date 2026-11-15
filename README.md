@@ -20,7 +20,7 @@ Each click on **Pick Color** starts one selection. After selecting a pixel or ca
 
 After editing: run `npm run build`, reload the extension on the extensions page, and reopen the popup. When upgrading from the old version, also refresh existing web tabs to remove its injected picker and styles.
 
-`npm run dev` serves the popup at `/src/popup/popup.html` for layout work; extension storage requires loading the built extension.
+`npm run dev` serves the popup at `/src/popup/index.html` for layout work; extension storage requires loading the built extension.
 
 ## Checks
 
@@ -45,3 +45,9 @@ Manual review:
 Requires the native EyeDropper API. Unsupported browsers display a message; there is no CSS-based fallback because it cannot reliably sample images or composited colors. Results use sRGB HEX.
 
 Only the `storage` extension permission is requested. No content script, background worker, or website access is required. Up to 50 distinct colors are retained locally; the popup displays the latest color.
+
+## Documentation
+
+- [Architecture and source layout](docs/ARCHITECTURE.md)
+- [Existing features and planned work](docs/FEATURES.md)
+- [Precision selection investigation backlog](docs/planning/BACKLOG.md)
