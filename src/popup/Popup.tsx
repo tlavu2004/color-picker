@@ -5,11 +5,20 @@ const Popup: React.FC = () => {
   const [color, setColor] = useState<string | null>(null);
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener((message) => {
-      if (message.type === 'COLOR_PICKED') {
-        setColor(message.color);
+    let active = true;
+    const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area === 'local' && changes.colors) {
+        setColor(changes.colors.newValue?.[0] ?? null);
       }
+    };
+    chrome.storage.onChanged.addListener(onChanged);
+    void chrome.storage.local.get({ colors: [] }).then(({ colors }) => {
+      if (active) setColor(colors[0] ?? null);
     });
+    return () => {
+      active = false;
+      chrome.storage.onChanged.removeListener(onChanged);
+    };
   }, []);
 
   const handlePickColor = () => {
