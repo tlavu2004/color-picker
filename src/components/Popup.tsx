@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/popup.css';
 import { pickColor } from '../services/pickColor';
 import { ColorResult } from './ColorResult';
+import { openSnapshot } from '../services/snapshot';
 
 const Popup: React.FC = () => {
   const [color, setColor] = useState<string | null>(null);
@@ -9,6 +10,7 @@ const Popup: React.FC = () => {
   const [picking, setPicking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [continuous, setContinuous] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -41,6 +43,10 @@ const Popup: React.FC = () => {
     setError('');
     setPicking(true);
     try {
+      if (continuous) {
+        await openSnapshot();
+        return;
+      }
       const selected = await pickColor();
       if (selected) {
         setColor(selected);
@@ -69,8 +75,13 @@ const Popup: React.FC = () => {
   return (
     <div className="popup-container">
       <h2>Color Picker</h2>
+      <label className="continuous-setting">
+        <input type="checkbox" checked={continuous} disabled={picking || copying} onChange={event => setContinuous(event.target.checked)} />
+        Continuous selection from tab snapshot
+      </label>
+      {continuous && <p className="snapshot-note">Opens a frozen image of this tab in a separate window. Esc ends the session.</p>}
       <button onClick={handlePickColor} disabled={picking}>
-        {picking ? 'Picking…' : 'Pick Color'}
+        {picking ? 'Picking…' : continuous ? 'Capture tab and pick' : 'Pick Color'}
       </button>
       {error && <p role="alert">{error}</p>}
 

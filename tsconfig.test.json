@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node", "chrome", "@testing-library/jest-dom"]
+  },
+  "include": ["src", "tests/**/*.ts", "tests/**/*.tsx", "vitest.config.ts"]
+}
