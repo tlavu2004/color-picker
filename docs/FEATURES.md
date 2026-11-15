@@ -18,7 +18,7 @@ The baseline on `main` before this branch stored 50 colors but displayed only th
 
 A default-off toggle was proposed to select multiple colors until Esc. The native API requires transient user activation on each opening and suppresses page UI events during selection. An automatic reopen loop cannot be promised to work reliably; a native click is not an ordinary page click that renews activation.
 
-No misleading or disabled toggle is added. This item requires a separately agreed implementation approach before development; precision/capture work remains outside this branch.
+No misleading or disabled toggle is added. The feasibility investigation is included in this PR: see [continuous selection findings and alternatives](CONTINUOUS_SELECTION.md). It recommends a separately approved tab-snapshot mode because a native toggle alone cannot provide the desired interaction. No capture implementation or precision-mode future work is included.
 
 References: [EyeDropper specification](https://wicg.github.io/eyedropper-api/), [Chromium chooser implementation](https://chromium.googlesource.com/chromium/src/+/main/content/browser/eye_dropper_chooser_impl.cc).
 

@@ -94,6 +94,7 @@ The browser controls the native magnifier and pointer movement. Precision concer
 
 ## Documentation
 
+- [Continuous selection feasibility](docs/CONTINUOUS_SELECTION.md)
 - [Architecture and source layout](docs/ARCHITECTURE.md)
 - [Existing features and planned work](docs/FEATURES.md)
 - [Precision selection investigation backlog](docs/BACKLOG.md)
