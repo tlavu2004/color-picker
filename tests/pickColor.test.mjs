@@ -31,7 +31,7 @@ function setup({ colors = [], failure, unsupported = false, storageFailure = fal
     } } },
   });
   vm.runInContext(code, context);
-  return { pick: context.exports.pickColor, opened: () => opened, saved: () => saved };
+  return { read: context.exports.readHistory, clear: context.exports.clearHistory, pick: context.exports.pickColor, opened: () => opened, saved: () => saved };
 }
 
 test('opens synchronously and saves normalized pixel color without duplicates', async () => {
@@ -42,10 +42,10 @@ test('opens synchronously and saves normalized pixel color without duplicates', 
   assert.deepEqual(picker.saved(), { colors: ['#AABBCC', '#123456'] });
 });
 
-test('keeps at most 50 colors', async () => {
+test('keeps at most 10 colors and upgrades legacy history', async () => {
   const picker = setup({ colors: Array.from({ length: 50 }, (_, i) => `#${i.toString(16).padStart(6, '0')}`) });
   await picker.pick();
-  assert.equal(picker.saved().colors.length, 50);
+  assert.equal(picker.saved().colors.length, 10);
   assert.equal(picker.saved().colors[0], '#AABBCC');
 });
 
@@ -69,4 +69,20 @@ test('picker failure is reported without overwriting saved color', async () => {
 
 test('storage failure is reported instead of claiming success', async () => {
   await assert.rejects(setup({ storageFailure: true }).pick(), /Storage unavailable/);
+});
+
+test('restoring legacy history normalizes, deduplicates and retains the newest ten', async () => {
+  const colors = ['#aabbcc', '#AABBCC', 'invalid', null, ...Array.from({ length: 50 }, (_, i) => `#${i.toString(16).padStart(6, '0')}`)];
+  const picker = setup({ colors });
+  const history = await picker.read();
+  assert.equal(history.length, 10);
+  assert.equal(history[0], '#AABBCC');
+  assert.equal(new Set(history).size, 10);
+  assert.deepEqual(picker.saved(), { colors: Array.from(history) });
+});
+
+test('clear history persists an empty list', async () => {
+  const picker = setup({ colors: ['#123456'] });
+  await picker.clear();
+  assert.deepEqual(picker.saved(), { colors: [] });
 });
