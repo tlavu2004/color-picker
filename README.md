@@ -16,7 +16,7 @@ Continuous selection and precision mode are not implemented. Localization is pro
 
 ## Run locally
 
-Use Node.js 22.12 or later (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
+Use Node.js 24.15.0+ (24.x) (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
 
 From the repository root:
 
@@ -43,7 +43,7 @@ After editing, run `npm run build`, click **Reload** on the extension's card, an
 | `npm run build` | Check TypeScript and build the unpacked extension into `dist/` |
 | `npm run preview` | Serve the production build for layout inspection at `/src/index.html` |
 | `npm run lint` | Lint TypeScript and TSX source |
-| `npm test` | Run the eight selection/storage logic tests |
+| `npm test` | Run Vitest service and popup tests |
 
 The dev and preview pages do not provide the extension's Chrome Storage API. Use the built extension loaded from `dist/` to verify selection, persistence, and clipboard behavior together. Vite is a build/development tool; no Vite server is needed to use the installed extension.
 
@@ -73,16 +73,7 @@ npm run lint
 npm test
 ```
 
-The eight automated tests use mocked EyeDropper and storage APIs. They check that opening is requested synchronously, HEX normalization, deduplication, the 10-color limit and legacy migration, cancellation, unsupported browsers, and selection/storage failures. They do not prove browser user-activation behavior or native picker operation. Popup/clipboard tests, coverage reporting, and CI are planned for a separate PR.
-
-Manual review in the loaded extension:
-
-- Opening or clicking a web page must not activate the picker or change page styles.
-- Pick pixels from an image, a gradient, and a translucent element; compare their displayed colors.
-- Select a color, select another, then cancel a new selection with Esc. The previous saved color must survive cancellation, and Pick Color must become available again.
-- Close and reopen the popup; the latest selected color must remain visible.
-- Selecting a color must leave the clipboard unchanged. Clicking Copy must paste the displayed HEX value into a text field.
-- After a successful copy, confirm that Copied! appears on the disabled button for two seconds, then returns to Copy. There must be no separate confirmation message.
+Vitest and React Testing Library cover service, popup, and clipboard behavior with mocked browser APIs. Run `npm run test:coverage` for TypeScript source coverage and `npm run test:typecheck` to check the test code. See [testing and delivery](docs/TESTING.md) for coverage scope, workflows, branch integration, and the manual browser checklist.
 
 ## Browser support and permissions
 
@@ -92,9 +83,14 @@ Only the `storage` extension permission is requested. There is no content script
 
 The browser controls the native magnifier and pointer movement. Precision concerns involving mouse DPI, display scaling, or zoom are recorded in the [investigation backlog](docs/BACKLOG.md); a custom precision mode is not part of the current implementation.
 
+## CI and delivery
+
+GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
+
 ## Documentation
 
 - [Continuous selection feasibility](docs/CONTINUOUS_SELECTION.md)
+- [Testing, coverage, and delivery](docs/TESTING.md)
 - [Architecture and source layout](docs/ARCHITECTURE.md)
 - [Existing features and planned work](docs/FEATURES.md)
 - [Precision selection investigation backlog](docs/BACKLOG.md)
