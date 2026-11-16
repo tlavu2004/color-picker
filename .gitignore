@@ -10,6 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
+color-picker-extension.zip
+color-picker-extension.zip.sha256
 *.local
 
 # Editor directories and files

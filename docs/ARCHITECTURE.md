@@ -31,13 +31,21 @@ color-picker-extension/
 │   └── services/
 │       └── pickColor.ts          # Opens EyeDropper and saves history
 ├── tests/
-│   └── pickColor.test.mjs        # Selection/storage tests with mocks
+│   ├── pickColor.test.ts         # Native selection and storage tests
+│   ├── Popup.test.tsx            # Popup and clipboard interactions
+│   ├── history.integration.test.tsx # Runs when history feature is present
+│   ├── browserMocks.ts           # Browser API mocks
+│   └── setup.ts                  # DOM matchers and cleanup
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── FEATURES.md
+│   ├── TESTING.md                # Local checks, CI, and release packaging
 │   └── BACKLOG.md                # Investigations and development proposals
 ├── README.md                     # Setup, build, and manual verification
 ├── vite.config.ts
+├── vitest.config.ts
+├── scripts/verify-build.mjs      # Verifies the built extension's asset paths
+├── .github/workflows/            # CI and tag-triggered release packaging
 ├── tsconfig*.json
 └── package.json
 ```
@@ -68,7 +76,7 @@ The manifest requests only the `storage` permission. The current architecture do
 
 `npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
 
-`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently six logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
+`npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI and release reuse `.github/workflows/verify.yml` on Node.js 24, selected through `.node-version`. Coverage is summarized in Actions. The verification job uploads a ZIP and SHA-256 checksum; the release job downloads and publishes that verified archive without rebuilding. See [testing and delivery](TESTING.md) for details and manual verification.
 
 ## Limitations
 
