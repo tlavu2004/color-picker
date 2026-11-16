@@ -16,7 +16,7 @@ Continuous selection, a recent-color interface, and a precision mode are not imp
 
 ## Run locally
 
-Use Node.js 22.22.2+ or 24.15.0+ (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
+Use Node.js 24.15.0+ (24.x) (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
 
 From the repository root:
 
@@ -84,7 +84,7 @@ The browser controls the native magnifier and pointer movement. Precision concer
 
 ## CI and delivery
 
-GitHub Actions verifies pull requests and main/feature/fix/CI branch pushes on Node.js 22 and 24, then uploads coverage and the unpacked extension. Pushing a version tag publishes a verified ZIP to a GitHub release; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
+GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
 
 ## Documentation
 

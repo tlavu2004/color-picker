@@ -42,8 +42,8 @@ Neither feature above is implemented in the current bug-fix branch.
 
 - Vitest and React Testing Library cover service, popup restoration, storage updates, selection/cancellation/retry, clipboard failures, pending operations, copy feedback, and cleanup.
 - V8 coverage maps to application TypeScript, excluding only the mounting entry; reports are informational with no minimum percentage gate.
-- GitHub Actions runs verification on Node.js 22/24 and uploads coverage and unpacked extension artifacts.
-- Version tags trigger verified ZIP packaging and GitHub release publication. Chrome Web Store deployment is not configured.
+- GitHub Actions reuses one Node.js 24 verification workflow for CI and releases, displays coverage in job summaries, and uploads reports and a verified ZIP/checksum.
+- Version tags trigger verification, checksum validation, and publication of the same verified ZIP to GitHub Releases. Chrome Web Store deployment is not configured.
 - Five feature-integration tests activate when the independent history feature is present. They are explicitly skipped on this baseline, which still stores 50 colors.
 - Native browser checks remain necessary. See [testing and delivery](TESTING.md).
 

@@ -2,13 +2,14 @@
 
 ## Local checks
 
-Use Node.js 22.22.2+ or 24.15.0+. Install the locked dependencies with `npm ci`, then run:
+Use Node.js 24.15.0+ (24.x). Install the locked dependencies with `npm ci`, then run:
 
 ```powershell
 npm run lint
 npm run test:typecheck
 npm test
 npm run test:coverage
+npm run coverage:summary
 npm run build
 npm run verify:build
 ```
@@ -25,13 +26,16 @@ No minimum percentage is enforced. The report measures mocked application behavi
 
 ## GitHub Actions
 
-- **CI** runs on main, feature/fix/CI branch pushes, PRs targeting main, and manual dispatch. It uses Node.js 22 and 24, `npm ci`, lint, test typechecking, coverage, build, and packaged-path verification.
-- Coverage and unpacked extension artifacts are uploaded from the Node 24 job and retained for 14 days. Workflow permissions are read-only.
-- **Release package** runs only when a `v*` tag is pushed. It repeats verification, checks that the tag is exactly `v` plus the manifest version, creates a ZIP with `manifest.json` at its root, and publishes it as a GitHub release asset.
-- Before release, update `public/manifest.json` to the intended version and keep package metadata consistent. For example, a manifest version of `1.0` requires tag `v1.0`. Push a release tag only when ready to publish.
-- The release job has repository-content write permission; it uses the built-in GitHub token. No Chrome Web Store deployment, credentials, or automatic tag creation are configured.
+- `.node-version` selects Node 24 for both workflows and local version managers; package engines require 24.15.0+ within Node 24. This extension uses Node for build/test only, so multi-version runtime compatibility is not a project requirement.
+- **CI** runs on PRs targeting main, pushes to main, and manual dispatch. It does not also run on feature-branch pushes, avoiding duplicate push/PR runs. Stale runs for the same PR/ref are cancelled.
+- **Extension verification** is a reusable workflow called by CI and release. Its read-only job has a 15-minute timeout and runs `npm ci`, lint, test typechecking, tests/coverage, build, asset checks, ZIP packaging, and SHA-256 generation.
+- Coverage is shown in the Actions job summary and uploaded as an artifact. The package artifact contains `color-picker-extension.zip` and its checksum, with `manifest.json` at the ZIP root. Download and extract the ZIP before using Load unpacked. Reports/packages are retained for 14 days.
+- **Release package** runs only on a pushed `v*` tag. It calls the same verification workflow, then a separate publishing job (10-minute timeout) downloads that exact artifact, checks the tag against the verified manifest version, verifies SHA-256, and publishes the ZIP/checksum to a GitHub release. It never rebuilds the archive after verification.
+- Only the release publishing job has contents-write permission. No Chrome Web Store deployment, credential setup, or automatic tag creation is configured. The same-tag release concurrency group does not cancel an active publication.
+- Before releasing, update `public/manifest.json` and keep package metadata consistent. A manifest version of `1.0` requires tag `v1.0`. Do not push a version tag until ready to publish.
+- Third-party Actions are pinned to verified full commit SHAs. Dependabot checks npm dependencies weekly and GitHub Actions monthly, grouping compatible npm updates and Actions updates into reviewable PRs.
 
-These workflow definitions are validated locally; hosted runner results become available after pushing and enabling Actions in the repository. No release tag is pushed as part of implementation.
+Run `npm run coverage:summary` after coverage to preview the job summary locally. The summary uses report counters, has no coverage threshold, and reports missing output without claiming coverage. The summary formatter has its own tests. A new workflow can be checked with actionlint; hosted CI runs when a PR is opened/updated, on main, or through manual dispatch. No release tag is pushed as part of implementation.
 
 ## Manual browser verification
 

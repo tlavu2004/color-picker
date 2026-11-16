@@ -76,7 +76,7 @@ The manifest requests only the `storage` permission. The current architecture do
 
 `npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
 
-`npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI runs checks on Node.js 22/24 and uploads reports/build artifacts; a separate tag-triggered workflow publishes release ZIPs. See [testing and delivery](TESTING.md) for details and manual verification.
+`npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI and release reuse `.github/workflows/verify.yml` on Node.js 24, selected through `.node-version`. Coverage is summarized in Actions. The verification job uploads a ZIP and SHA-256 checksum; the release job downloads and publishes that verified archive without rebuilding. See [testing and delivery](TESTING.md) for details and manual verification.
 
 ## Limitations
 
