@@ -9,10 +9,10 @@ A Chrome Manifest V3 extension built with React 19 and TypeScript, using Vite 7 
 - View a color swatch and uppercase HEX value; reopening the popup restores the latest color.
 - Click **Copy** to write the HEX value to the clipboard. Selection never copies automatically.
 - The Copy button is disabled while writing. On success, it displays **Copied!** and stays disabled for two seconds before returning to **Copy**. Starting a new selection clears the confirmation.
-- Retain up to 50 distinct colors locally, newest first. Selecting an existing color moves it to the front. Only the latest color is currently displayed; there is no history grid or clear-history action yet.
+- Retain up to 10 distinct colors locally, newest first. Selecting an existing color moves it to the front. The recent-color grid lets you view an earlier color without copying; Clear history removes saved colors. Legacy history is reduced to the newest ten entries when loaded.
 - Display errors when selection, storage, or clipboard operations fail, or when EyeDropper is unavailable.
 
-Continuous selection, a recent-color interface, and a precision mode are not implemented. See [features and plans](docs/FEATURES.md) for their status.
+Continuous selection and precision mode are not implemented. Localization is proposed for step 3. See [features and plans](docs/FEATURES.md) for their status.
 
 ## Run locally
 
@@ -55,6 +55,7 @@ src/
 ├── main.tsx
 ├── components/
 │   ├── Popup.tsx
+│   ├── ColorHistory.tsx
 │   └── ColorResult.tsx
 ├── styles/
 │   └── popup.css
@@ -88,6 +89,7 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 
 ## Documentation
 
+- [Continuous selection feasibility](docs/CONTINUOUS_SELECTION.md)
 - [Testing, coverage, and delivery](docs/TESTING.md)
 - [Architecture and source layout](docs/ARCHITECTURE.md)
 - [Existing features and planned work](docs/FEATURES.md)

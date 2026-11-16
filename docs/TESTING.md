@@ -16,7 +16,7 @@ npm run verify:build
 
 `npm run test:watch` runs tests during development. Vitest transforms TypeScript directly and uses jsdom with React Testing Library. Browser APIs are mocked; no real user clipboard or extension storage is touched by tests. The old transpile-in-VM harness is replaced.
 
-Tests cover restoration, local storage subscriptions and cleanup under StrictMode, selection/cancellation/retry, error handling, explicit clipboard writes, pending-copy disabling, the two-second cooldown, feedback reset, and timer cleanup. Service tests cover immediate opening, HEX normalization, newest-first bounded history, and native/storage failures.
+Tests cover restoration, local storage subscriptions and cleanup under StrictMode, selection/cancellation/retry, error handling, explicit clipboard writes, pending-copy disabling, the two-second cooldown, feedback reset, and timer cleanup. Service tests cover immediate opening, HEX normalization, newest-first bounded history, and native/storage failures. History integration tests cover ten-color migration, swatch selection, repicking, clearing, and operation/failure states.
 
 ## Coverage
 
@@ -46,13 +46,15 @@ Run `npm run coverage:summary` after coverage to preview the job summary locally
 5. Reopen the popup and confirm restoration.
 6. Selection must not change the clipboard. Copy must paste the displayed HEX value.
 7. Confirm Copied! appears only on the disabled button for two seconds, then returns to Copy; changing color clears confirmation.
-8. When the independent history feature is merged, verify ten swatches, selecting old colors without copying, clearing history, and migration from the old 50-entry history.
+8. Verify up to ten swatches, selecting old colors without copying, clearing history, and migration from the old 50-entry history.
 
-## Integrating the independent branches
+## History and CI integration status
 
-Both `feat/color-history` and `ci/tests-and-coverage` start at main commit `a069d30`. The CI branch tests the baseline with its 50-color storage bound. Its bounded-history contract also accepts the feature's stricter ten-color bound. Five additional integration cases activate automatically when the feature exports are present; on the baseline they are explicitly skipped. They cover ten-color migration, swatch selection, repicking, clearing, and failure/operation states.
+The history and CI branches originally started at commit `a069d30`. CI has since been merged into `main` and incorporated into this history branch. The current service stores at most ten distinct colors; the old 50-color limit describes legacy data only.
 
-When merging both branches, retain the feature's service and UI changes. Remove the old `tests/pickColor.test.mjs` if Git reports a modify/delete conflict; retain the Vitest history integration cases, which already cover migration, clear history, and grid interactions. The old VM harness is not part of the new `npm test` command. Local integration validation with the feature source passed all 21 tests, test typechecking, build, and asset verification. Coverage for that combined source was 100% lines and 94.2% branches (the mounting entry is excluded). Then rerun all checks above against the final merged code. README and feature-status documentation may also require combining their independent edits.
+`tests/pickColor.test.mjs` has been removed in favor of Vitest. The five cases in `tests/history.integration.test.tsx` run on this branch because its history service is present. A skipped history suite here should be investigated rather than treated as an expected baseline result.
+
+Run all checks above after resolving merge conflicts and before completing the merge commit. Use that run's test counts and coverage results; earlier results from separate branches are not a substitute for checking the final merged tree. For subsequent continuous-selection and localization PRs, preserve the ten-color service/UI, shared CI configuration, and all relevant tests when resolving conflicts.
 
 ## Dependency audit
 
