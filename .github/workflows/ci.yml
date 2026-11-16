@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, 'feat/**', 'fix/**', 'ci/**']
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -11,42 +11,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify:
-    name: Verify on Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [22, 24]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:typecheck
-      - run: npm run test:coverage
-      - run: npm run build
-      - run: npm run verify:build
-      - name: Upload coverage reports
-        if: ${{ !cancelled() && matrix.node == 24 }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Upload unpacked extension
-        if: ${{ success() && matrix.node == 24 }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: color-picker-extension
-          path: dist/
-          if-no-files-found: error
-          retention-days: 14
+    name: Extension verification
+    uses: ./.github/workflows/verify.yml

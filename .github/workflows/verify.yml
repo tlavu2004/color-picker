@@ -1,0 +1,73 @@
+name: Extension verification
+
+on:
+  workflow_call:
+    outputs:
+      version:
+        description: Verified extension manifest version
+        value: ${{ jobs.verify.outputs.version }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify and package on Node 24
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck tests
+        run: npm run test:typecheck
+      - name: Test with coverage
+        id: tests
+        run: npm run test:coverage
+      - name: Summarize coverage
+        if: ${{ !cancelled() && steps.tests.outcome != 'skipped' }}
+        run: npm run coverage:summary
+      - name: Build extension
+        run: npm run build
+      - name: Verify packaged paths
+        run: npm run verify:build
+      - name: Record manifest version
+        id: metadata
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${manifest.version}\n`);
+          NODE
+      - name: Package verified extension
+        working-directory: dist
+        run: zip -r ../color-picker-extension.zip .
+      - name: Record archive checksum
+        run: sha256sum color-picker-extension.zip > color-picker-extension.zip.sha256
+      - name: Upload coverage reports
+        if: ${{ !cancelled() && steps.tests.outcome != 'skipped' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload verified package
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: color-picker-extension
+          path: |
+            color-picker-extension.zip
+            color-picker-extension.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
