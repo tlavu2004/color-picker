@@ -33,19 +33,6 @@ A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use 
 
 Custom selection captures ordinary HTTP/HTTPS tabs and uses a frozen viewport, rather than a live page or whole-screen feed. See [Pick colors](#pick-colors) for the workflow and limitations.
 
-### Screenshot checklist
-
-Save the following screenshots at these repository-relative paths. Capture the current 1.0.0 interface on neutral sample content, without personal information. This checklist reserves filenames; screenshots have not been added yet.
-
-| Screenshot | File path | Capture requirements |
-| --- | --- | --- |
-| English popup | `docs/images/popup-en.png` | English selected, a saved color with HEX and Copy, and recent-color history visible |
-| Vietnamese popup | `docs/images/popup-vi.png` | The same state in Vietnamese; the heading remains Color Picker |
-| Single-color picker | `docs/images/single-picker.png` | Single mode active on a sample page, with the magnifier and instruction panel visible |
-| Continuous picker | `docs/images/continuous-picker.png` | Continuous mode after multiple selections, with magnifier, saved-color swatch/HEX, Stop, and corner-movement control visible |
-
-The image references below are prepared in advance and will display once these files are added.
-
 ![English popup with color preview and recent history](docs/images/popup-en.png)
 
 ![Vietnamese popup with the unchanged Color Picker product name](docs/images/popup-vi.png)
@@ -99,6 +86,12 @@ The displayed tab image is frozen; page code can continue running beneath it. Sc
 ![Single-color selection with the custom pixel magnifier](docs/images/single-picker.png)
 
 ![Continuous selection with saved-color feedback and session controls](docs/images/continuous-picker.png)
+
+### Native screen picker
+
+Expand **Advanced** and click **Native screen picker** to use the browser's one-color EyeDropper. Its magnifier is controlled by the browser, and the popup stays visible while selecting.
+
+![Native EyeDropper with the browser magnifier active](docs/images/native-picker.png)
 
 ## Architecture
 
