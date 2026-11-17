@@ -43,6 +43,33 @@ afterEach(() => {
 });
 
 describe('on-tab frozen picker', () => {
+  it('saves the fractional pointer pixel when compatibility click coordinates are rounded', async () => {
+    const { roots, context, api } = setup();
+    context.getImageData.mockImplementation((...args: unknown[]) => ({
+      data: new Uint8ClampedArray(Number(args[0]) === 41 ? [172, 80, 89, 255] : [232, 234, 217, 255]),
+    }));
+    await installOverlay(imageData, viewport, true);
+    const canvas = roots[0].querySelector('canvas')!;
+    // At 2x capture scale, 20.75 CSS px maps to pixel 41; integer 20 maps to 40.
+    const release = new Event('pointerup', { bubbles: true });
+    Object.assign(release, { clientX: 20.75, clientY: 30.75, button: 0 });
+    canvas.dispatchEvent(release);
+    fireEvent.click(canvas, { clientX: 20, clientY: 30 });
+    await waitFor(() => expect(api.colors()).toEqual(['#AC5059']));
+    expect(roots[0].querySelector('.loupe')).toHaveTextContent('#AC5059');
+    expect(roots[0].querySelector('[role=status]')).toHaveTextContent('#AC5059');
+  });
+
+  it('updates a stale preview from the exact click sample before saving', async () => {
+    const { roots, context, api } = setup();
+    await installOverlay(imageData, viewport, true);
+    expect(roots[0].querySelector('.loupe')).toHaveTextContent('#FF0000');
+    context.getImageData.mockReturnValueOnce({ data: new Uint8ClampedArray([0, 255, 0, 255]) });
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 30 });
+    expect(roots[0].querySelector('.loupe')).toHaveTextContent('#00FF00');
+    await waitFor(() => expect(api.colors()).toEqual(['#00FF00']));
+    expect(roots[0].querySelector('[role=status]')).toHaveTextContent('#00FF00');
+  });
   it('translates continuous controls and saved-color status without changing persistence', async () => {
     const { roots, api } = setup();
     await installOverlay(imageData, viewport, true, '', overlayTranslations.vi);
