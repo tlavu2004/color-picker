@@ -21,13 +21,38 @@ A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use 
 - [Contributing](#contributing)
 - [License](#license)
 
+## Current features
+
+- **Single or continuous selection:** use the same pixel magnifier on a frozen image of the visible tab. Save one color and finish, or keep selecting until Esc or Stop.
+- **Native screen picker:** choose the browser's EyeDropper under Advanced to sample a screen pixel beyond the tab. This alternative selects one color at a time and keeps the popup visible.
+- **Recent-color history:** retain the newest ten distinct colors locally. Repicking a color moves it to the front; selecting a history swatch only changes the displayed result. Clear history removes saved colors, and older histories are trimmed to ten on load.
+- **Color preview and explicit copying:** view a swatch and uppercase sRGB HEX value. Only Copy writes to the clipboard; successful copying shows a disabled Copied! button for two seconds.
+- **Session controls and popup return:** move instructions between screen corners, exit with Esc or Stop, and return to the popup after queued saves finish when the source tab and window remain active.
+- **English and Vietnamese:** choose either language or Auto to follow the browser language with English fallback. Preferences persist locally; the Color Picker product name stays unchanged.
+- **On-device processing:** screenshots are processed in memory and are not uploaded or stored in extension storage. Colors and preferences stay in local extension storage. See [privacy and temporary session metadata](docs/guides/PRIVACY.md).
+
+Custom selection captures ordinary HTTP/HTTPS tabs and uses a frozen viewport, rather than a live page or whole-screen feed. See [Pick colors](#pick-colors) for the workflow and limitations.
+
+### Screenshot checklist
+
+Save the following screenshots at these repository-relative paths. Capture the current 1.0.0 interface on neutral sample content, without personal information. This checklist reserves filenames; screenshots have not been added yet.
+
+| Screenshot | File path | Capture requirements |
+| --- | --- | --- |
+| English popup | `docs/images/popup-en.png` | English selected, a saved color with HEX and Copy, and recent-color history visible |
+| Vietnamese popup | `docs/images/popup-vi.png` | The same state in Vietnamese; the heading remains Color Picker |
+| Single-color picker | `docs/images/single-picker.png` | Single mode active on a sample page, with the magnifier and instruction panel visible |
+| Continuous picker | `docs/images/continuous-picker.png` | Continuous mode after multiple selections, with magnifier, saved-color swatch/HEX, Stop, and corner-movement control visible |
+
+The image references below are prepared in advance and will display once these files are added.
+
+![English popup with color preview and recent history](docs/images/popup-en.png)
+
+![Vietnamese popup with the unchanged Color Picker product name](docs/images/popup-vi.png)
+
 ## Localization
 
 Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/guides/LOCALIZATION.md).
-
-## Current features
-
-Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. English and Vietnamese are supported, with Auto following the browser language. The product name Color Picker stays unchanged.
 
 ## Install from GitHub Releases
 
@@ -50,6 +75,8 @@ Before a release is published, reviewers can download the **color-picker-extensi
 Use desktop Chrome/Edge 127+ and Node.js 24.15.0+ (24.x), matching `.node-version` and CI.
 
 ```powershell
+git clone https://github.com/tlavu2004/color-picker.git
+cd color-picker
 npm ci
 npm run build
 npm run verify:build
@@ -68,6 +95,10 @@ Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Lo
 - Saves retain the newest **10** distinct colors. Rapid clicks are serialized so one selection does not overwrite another.
 
 The displayed tab image is frozen; page code can continue running beneath it. Scrolling is blocked during selection. Resize, viewport changes, or navigation end the overlay. Stop and start again to capture new content. Advanced grid/keyboard precision controls remain deferred.
+
+![Single-color selection with the custom pixel magnifier](docs/images/single-picker.png)
+
+![Continuous selection with saved-color feedback and session controls](docs/images/continuous-picker.png)
 
 ## Architecture
 
