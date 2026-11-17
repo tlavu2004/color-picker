@@ -20,7 +20,7 @@ Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Lo
 - Switch on: **Start continuous selection** captures the visible tab, opens an overlay with a magnifier on the same tab, and closes the popup. No separate capture window is created.
 - Both modes use the same enlarged pixels, center marker, and HEX preview. In continuous mode, click multiple points without closing the magnifier. If saving fails in single mode, the overlay stays open so you can retry.
 - Under **Advanced**, **Native screen picker** explicitly opens the original EyeDropper for one screen pixel, including outside the tab. It is independent of the continuous switch and never selected automatically. It keeps the popup open and may obscure part of the screen; use the main tab picker for an unobstructed view.
-- Use **Move controls** to reach pixels covered by the instructions.
+- Use **Move to next corner** to reach pixels covered by the instructions.
 - **Esc** or **Stop** removes the image and magnifier and returns to the page. The popup reopens automatically after saves finish if the same source tab/window is still active. It restores the selected mode and latest color; copying remains explicit.
 - Saves retain the newest **10** distinct colors. Rapid clicks are serialized so one selection does not overwrite another.
 

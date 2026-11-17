@@ -8,7 +8,7 @@
 - A default-off Continuous selection switch. Start captures and overlays the visible source tab; it does not open another window.
 - A custom persistent magnifier with non-smoothed enlarged pixels, center-pixel marker, and HEX preview.
 - Repeated clicks save colors while the overlay stays active. Accepted writes are serialized and retain the newest ten distinct colors.
-- Esc/Stop removes the entire overlay and restores page interaction. Move controls lets the user reach pixels hidden under the instruction panel.
+- Esc/Stop removes the entire overlay and restores page interaction. Move to next corner lets the user reach pixels hidden under the instruction panel.
 - The modal blocks clicks through to the source page. Wheel/touch scrolling is suppressed; viewport changes, source scrolling, and navigation end the session.
 - Screenshot data is kept in the injected picker only, not persistent or session storage. No server upload or broad host access is added. A small background worker manages returning to the popup.
 - Capture/injection/decoding errors are reported; storage errors allow retry without ending the picker.

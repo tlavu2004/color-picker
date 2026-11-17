@@ -66,7 +66,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   stopButton.textContent = 'Stop';
   const moveButton = document.createElement('button');
   moveButton.type = 'button';
-  moveButton.textContent = 'Move controls';
+  moveButton.textContent = 'Move to next corner';
   let corner = 0;
   moveButton.addEventListener('click', () => {
     corner = (corner + 1) % 4;

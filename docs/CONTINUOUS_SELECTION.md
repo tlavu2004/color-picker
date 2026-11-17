@@ -9,7 +9,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 3. Enable the checkbox and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
 5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count.
-6. **Move controls** cycles the instruction panel through the corners so it does not permanently hide sample points.
+6. **Move to next corner** cycles the instruction panel through the corners so it does not permanently hide sample points.
 7. **Esc** or **Stop** removes the overlay and magnifier, restores focus, and returns normal interaction to the source page. After pending saves finish, the popup reopens with the latest color and previous custom mode when the source context is still active. Copy remains explicit; choosing a pixel never writes the clipboard.
 8. To capture new content, exit and start another session. An old overlay is removed before a new capture, so the extension never intentionally samples its own earlier overlay.
 
@@ -51,7 +51,7 @@ Manual checklist:
 - On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
 - Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
 - Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.
-- Use Move controls and sample the area formerly under the panel. Clicking the panel must not save a pixel.
+- Use Move to next corner and sample the area formerly under the panel. Clicking the panel must not save a pixel.
 - Try a link/button underneath the screenshot; it must only select a color, not activate the source control.
 - Press Esc and separately test Stop. The image and magnifier must disappear and normal page clicks/scrolling must return.
 - Start again and confirm there is only one overlay, without old UI in the captured pixels.
