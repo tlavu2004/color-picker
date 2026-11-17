@@ -12,7 +12,7 @@ export const messages = {
     languageLoadError: 'Could not load the language setting. Using browser language.',
   },
   vi: {
-    title: 'Chọn màu', pick: 'Chọn màu', picking: 'Đang chọn…', copy: 'Sao chép', copied: 'Đã chép!',
+    title: 'Color Picker', pick: 'Chọn màu', picking: 'Đang chọn…', copy: 'Sao chép', copied: 'Đã chép!',
     language: 'Ngôn ngữ', auto: 'Tự động', loadError: 'Không thể tải màu đã lưu. Vui lòng thử lại.',
     pickError: 'Không thể chọn hoặc lưu màu. Vui lòng thử lại.',
     copyError: 'Không thể sao chép màu. Vui lòng thử lại.',
