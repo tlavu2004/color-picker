@@ -10,7 +10,23 @@ Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser la
 
 Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. English and Vietnamese are supported, with Auto following the browser language. The product name Color Picker stays unchanged.
 
-## Run locally
+## Install from GitHub Releases
+
+Requires desktop Chrome or Edge 127+. No Node.js installation or local build is needed for this method.
+
+1. Open [Releases](https://github.com/tlavu2004/color-picker-extension/releases) and choose a published version. If there is no release yet, use the source-build instructions below.
+2. Under **Assets**, download `color-picker-extension.zip`. Use this extension package rather than GitHub's automatically generated **Source code** archives.
+3. Extract the ZIP into a permanent folder. The selected folder must directly contain `manifest.json`; keep the extracted files in place while the extension is installed.
+4. Open `chrome://extensions` or `edge://extensions`, enable **Developer mode**, and click **Load unpacked**.
+5. Select the extracted folder, then open Color Picker from the browser's extensions menu. Pin it to the toolbar if desired.
+
+For updates, download and extract the new release into the same folder, replacing the previous files, then click **Reload** on the extension's card. Reopen the popup and acknowledge any new permission prompt. Loading a different folder as another unpacked extension may create a separate installation with separate saved data. GitHub ZIP installations do not update automatically.
+
+Each release also provides `color-picker-extension.zip.sha256`. To check the ZIP on Windows, run `Get-FileHash ./color-picker-extension.zip -Algorithm SHA256` and compare the hash with the checksum file.
+
+Before a release is published, reviewers can download the **color-picker-extension** artifact from a successful GitHub Actions run for the intended commit. Extract the artifact first, then extract its inner `color-picker-extension.zip` and follow the same Load unpacked steps. An Actions artifact is a review build, not a published release.
+
+## Build from source
 
 Use desktop Chrome/Edge 127+ and Node.js 24.15.0+ (24.x), matching `.node-version` and CI.
 
