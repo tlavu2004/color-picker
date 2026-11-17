@@ -42,6 +42,26 @@ afterEach(() => {
 });
 
 describe('on-tab frozen picker', () => {
+  it('shows a saved-color swatch only after persistence and keeps it on failed saves', async () => {
+    const { roots, api, context } = setup();
+    await installOverlay(imageData, viewport, true);
+    const swatch = roots[0].querySelector('.saved-swatch') as HTMLElement;
+    expect(swatch).toHaveAttribute('hidden');
+    const save = deferred<void>();
+    api.set.mockReturnValueOnce(save.promise);
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 20 });
+    await waitFor(() => expect(api.set).toHaveBeenCalled());
+    expect(swatch).toHaveAttribute('hidden');
+    save.resolve();
+    await waitFor(() => expect(swatch).not.toHaveAttribute('hidden'));
+    expect(swatch.style.backgroundColor).toBe('rgb(255, 0, 0)');
+    api.set.mockRejectedValueOnce(new Error('Denied'));
+    context.getImageData.mockReturnValueOnce({ data: new Uint8ClampedArray([0, 255, 0, 255]) });
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 30, clientY: 30 });
+    await waitFor(() => expect(roots[0].querySelector('[role=alert]')).toHaveTextContent('Could not save'));
+    expect(swatch.style.backgroundColor).toBe('rgb(255, 0, 0)');
+    expect(api.writeText).not.toHaveBeenCalled();
+  });
   it('uses a closed shadow root and displays a persistent non-smoothed magnifier', async () => {
     const { roots, context, api } = setup();
     await installOverlay(imageData, viewport, true);

@@ -30,6 +30,9 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
     canvas.image { display:block; width:100%; height:100%; cursor:crosshair; touch-action:none; }
     .panel { position:absolute; left:12px; top:12px; max-width:calc(100% - 24px); padding:10px 12px; border-radius:8px; border:1px solid #b8c1cc; background:#fff; color:#172033; font:13px/1.5 system-ui,sans-serif; box-shadow:0 3px 16px #0004; }
     .panel p { margin:0 0 6px; }
+    .saved-result { display:flex; align-items:center; gap:8px; }
+    .saved-swatch { flex:0 0 22px; width:22px; height:22px; margin-bottom:6px; border:1px solid #8993a1; border-radius:4px; }
+    .saved-swatch[hidden] { display:none; }
     button { font:inherit; padding:4px 12px; cursor:pointer; }
     button:focus-visible { outline:3px solid #1673d1; outline-offset:2px; }
     .loupe { position:absolute; pointer-events:none; width:144px; padding:6px; background:#fff; color:#172033; border:1px solid #777; border-radius:6px; box-shadow:0 3px 14px #0005; font:13px/1.4 monospace; text-align:center; }
@@ -49,6 +52,13 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
   status.textContent = 'Ready. Copy saved colors from the extension popup after finishing.';
+  const savedResult = document.createElement('div');
+  savedResult.className = 'saved-result';
+  const savedSwatch = document.createElement('span');
+  savedSwatch.className = 'saved-swatch';
+  savedSwatch.hidden = true;
+  savedSwatch.setAttribute('aria-hidden', 'true');
+  savedResult.append(savedSwatch, status);
   const error = document.createElement('p');
   error.setAttribute('role', 'alert');
   const stopButton = document.createElement('button');
@@ -67,7 +77,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
       bottom: corner >= 2 ? '12px' : 'auto',
     });
   });
-  panel.append(help, status, error, stopButton, moveButton);
+  panel.append(help, savedResult, error, stopButton, moveButton);
   const loupe = document.createElement('div');
   loupe.className = 'loupe';
   loupe.hidden = true;
@@ -204,6 +214,8 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
               await chrome.storage.local.set({ colors: next });
               if (active) {
                 if (!continuous) { stop('selected'); return; }
+                savedSwatch.style.backgroundColor = hex;
+                savedSwatch.hidden = false;
                 status.textContent = 'Saved ' + hex + ' · ' + next.length + '/10 recent colors. Keep clicking or press Esc.';
                 error.textContent = '';
               }
