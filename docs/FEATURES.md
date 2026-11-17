@@ -4,15 +4,16 @@
 
 - Shared single/continuous tab overlay with the same magnifier, Escape cancellation, HEX restoration, and explicit Copy/Copied! behavior.
 - Single mode exits after one successful save and blocks duplicate clicks while pending; failed saves keep it open for retry.
-- A separate Native screen picker opens the browser EyeDropper explicitly, without silently changing the primary experience.
+- A Native screen picker under collapsed Advanced opens the browser EyeDropper explicitly, without silently changing the primary experience.
 - A default-off Continuous selection switch. Start captures and overlays the visible source tab; it does not open another window.
 - A custom persistent magnifier with non-smoothed enlarged pixels, center-pixel marker, and HEX preview.
 - Repeated clicks save colors while the overlay stays active. Accepted writes are serialized and retain the newest ten distinct colors.
 - Esc/Stop removes the entire overlay and restores page interaction. Move controls lets the user reach pixels hidden under the instruction panel.
 - The modal blocks clicks through to the source page. Wheel/touch scrolling is suppressed; viewport changes, source scrolling, and navigation end the session.
-- Screenshot data is kept in the injected picker only, not persistent or session storage. No server upload, broad host access, or background worker is added.
+- Screenshot data is kept in the injected picker only, not persistent or session storage. No server upload or broad host access is added. A small background worker manages returning to the popup.
 - Capture/injection/decoding errors are reported; storage errors allow retry without ending the picker.
-- Tests cover native/popup behavior, startup, rapid selection, magnifier persistence, serialized injection, and cleanup.
+- Custom single-save or Esc/Stop completion reopens the popup in the still-active source context after pending writes finish. The custom mode and latest color are restored. Navigation/tab changes and lifecycle abandonment do not force a popup.
+- Tests cover native/popup behavior, startup, rapid selection, magnifier persistence, serialized injection, cleanup, and background return races.
 
 See [continuous selection](CONTINUOUS_SELECTION.md) for details. The picture is a frozen tab viewport; underlying page JavaScript may continue running. Stop and restart for fresh content.
 

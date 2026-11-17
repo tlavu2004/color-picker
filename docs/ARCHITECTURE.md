@@ -4,14 +4,15 @@
 
 Chrome Manifest V3 packages a React 19 + TypeScript popup, built with Vite 7. Vite is a development/build tool, not an extension runtime. The sole HTML entry is `src/index.html`, mounted by `src/main.tsx`.
 
-The default Pick Color and continuous mode both capture the source tab and inject the same self-contained, isolated-world picker. A boolean mode controls whether it exits after a successful save or keeps accepting pixels. Native EyeDropper is available through a separate explicit button. There is no background worker or automatically injected content script.
+The default Pick Color and continuous mode both capture the source tab and inject the same self-contained, isolated-world picker. A boolean mode controls whether it exits after a successful save or keeps accepting pixels. Native EyeDropper is available through a separate explicit button. A module service worker restores the popup after custom selection; there is no automatically injected content script.
 
 ## Source responsibilities
 
 - `src/components/`: popup coordination, the default-off continuous switch, and color-result/copy UI.
 - `src/styles/`: popup CSS.
 - `src/services/pickColor.ts`: native picking and ten-color storage normalization, migration, and saving.
-- `src/services/tabSelection.ts`: prepare/capture/validate/inject orchestration.
+- `src/services/tabSelection.ts`: prepare/capture/validate/inject orchestration and launch-port handshake.
+- `src/background/`: completion-message validation, session state, source lifecycle invalidation, and popup restoration.
 - `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
 - `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
 - `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
@@ -19,7 +20,7 @@ The default Pick Color and continuous mode both capture the source tab and injec
 
 ## Startup and selection
 
-The separate Native screen picker button opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
+The Native screen picker button under Advanced opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
 
 Tab-picker startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
 
@@ -42,3 +43,11 @@ Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so the ne
 Run lint, test typechecking, Vitest, coverage, and `verify:build`. Coverage includes the popup, services, and injected module and excludes only the mounting entry. Tests include serialization of injected functions and DOM cleanup, but capture/injection/top-layer behavior still needs a real Chrome check.
 
 See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for branch scope, and the [backlog](BACKLOG.md) for deferred advanced precision work.
+
+## Popup restoration
+
+Chrome/Edge 127+ is required for action.openPopup. The action popup closes after the custom picker is armed. A launch port lets the worker wait until it really closes, avoiding a close/reopen race for fast selections. After save success or Esc/Stop, the overlay sends completion only after accepted writes settle.
+
+Session metadata and the last custom mode are stored in in-memory storage.session, not screenshots. The worker validates extension, tab, frame, document ID, and random session ID; it consumes each completion once. It rechecks the source tab URL, active tab, and focused window before opening the popup. Navigation, tab closure/activation away, superseding sessions, viewport cleanup, and expired sessions do not request a popup in another context. Metadata allows normal worker restarts without losing a pending return.
+
+If Chrome refuses popup opening, saved colors remain intact and a dot badge allows a manual icon click. Opening the popup clears the badge. Native mode keeps the existing popup visible and is isolated in the collapsed Advanced section with an explanation of that limitation.

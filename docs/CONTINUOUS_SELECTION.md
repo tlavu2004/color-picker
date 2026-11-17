@@ -10,7 +10,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
 5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count.
 6. **Move controls** cycles the instruction panel through the corners so it does not permanently hide sample points.
-7. **Esc** or **Stop** removes the overlay and magnifier, restores focus, and returns normal interaction to the source page. Open the popup to view/copy saved colors. Copy remains explicit; choosing a pixel never writes the clipboard.
+7. **Esc** or **Stop** removes the overlay and magnifier, restores focus, and returns normal interaction to the source page. After pending saves finish, the popup reopens with the latest color and previous custom mode when the source context is still active. Copy remains explicit; choosing a pixel never writes the clipboard.
 8. To capture new content, exit and start another session. An old overlay is removed before a new capture, so the extension never intentionally samples its own earlier overlay.
 
 ## Frozen view and lifecycle
@@ -23,7 +23,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 ## Permissions, data, and page isolation
 
-- Uses **activeTab** and **scripting** only for a user-started session on the selected source tab; retains **storage** for colors. No broad host permission, automatic content script, or background worker is added.
+- Uses **activeTab** and **scripting** only for a user-started session on the selected source tab; retains **storage** for colors. No broad host permission or automatic content script is added. A module service worker manages popup restoration.
 - Restricted browser pages, extension stores, and other pages that prohibit script injection cannot use this overlay. Use the native picker there. Injection/capture errors are reported in the popup.
 - The captured PNG is passed directly to an isolated-world injected function, decoded as an ImageBitmap, and drawn in a closed shadow tree. It is not placed in local/session storage, a page-visible image URL, or a separate window.
 - The closed shadow tree prevents ordinary page DOM code from directly querying the screenshot canvas. It is not presented as a general security boundary against the browser or developer tools.
@@ -42,12 +42,12 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-There are 36 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
+There are 52 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
 Manual checklist:
 
 - With the switch off, verify Pick Color opens the same magnifier, saves one color, and exits only after successful storage. With it on, verify the same zoom stays open across multiple selections.
-- Verify Native screen picker explicitly opens the browser EyeDropper, independently of the switch and without capture injection.
+- Expand Advanced and verify Native screen picker explicitly opens the browser EyeDropper, independently of the switch and without capture injection.
 - On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
 - Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
 - Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.
@@ -64,3 +64,15 @@ This branch still needs the normal update from the latest main before its PR is 
 ## Reload troubleshooting
 
 If the popup reports that scripting permission is unavailable, reload the extension itself on chrome://extensions or edge://extensions, then close and reopen the popup. Reloading only the source webpage does not apply manifest permission changes. Confirm the installed extension points to this project's dist directory. In popup DevTools, chrome.runtime.getManifest().permissions should contain scripting. No capture is attempted until the API is available.
+
+## Popup return after a custom session
+
+Requires Chrome/Edge 127+. Reload the extension itself after this update so its module service worker is registered. Pick one color with the main button: the popup closes during picking and reopens after a successful save. Cancel with Esc before picking: it reopens with the previous color. In continuous mode, save several colors and press Esc/Stop: it reopens only after those writes settle, with continuous mode still selected.
+
+If the source tab navigates/closes, the user changes tabs, the browser window loses focus, or the overlay is removed by viewport cleanup, the extension does not open a popup in an unrelated context. Return metadata expires after 30 minutes. If Chrome refuses action.openPopup, a dot badge is shown; click the icon manually to retrieve the saved color.
+
+The worker uses a per-session random ID, source document/tab/window validation, and a launch-port handshake. No fixed reopen delay or automatic fallback to native is used. Native remains in Advanced, keeps the popup visible while selecting, and can cover screen content; the custom path is the recommended unobstructed workflow.
+
+Additional manual checks: finish immediately after starting to test the startup race; test Esc with no selection; test multiple saves followed immediately by Esc; switch tabs during a pending save and ensure no popup appears on the new tab; confirm Advanced is collapsed when the popup returns. Automated lifecycle tests mock action.openPopup and do not prove browser-specific focus behavior.
+
+Reference: [Chrome action.openPopup](https://developer.chrome.com/docs/extensions/reference/api/action#method-openPopup).
