@@ -18,10 +18,7 @@ describe('native color selection and storage', () => {
     const browser = mockBrowser(oldColors);
     await pickColor();
     const result = browser.colors();
-    // This baseline stores 50. The independent feature PR lowers the limit to 10.
-    // Both retain the same newest-first, bounded-history contract.
-    expect(result.length).toBeLessThanOrEqual(50);
-    expect(result.length).toBeGreaterThan(1);
+    expect(result.length).toBe(10);
     expect(result[0]).toBe('#AABBCC');
     expect(result.slice(1)).toEqual(oldColors.slice(0, result.length - 1));
     expect(result).not.toContain(oldColors[59]);

@@ -29,3 +29,12 @@ Acceptance criteria for a future precision mode:
 - Validate across relevant zoom/scaling settings and document the capture scope and limitations.
 
 Reference: https://wicg.github.io/eyedropper-api/
+
+## Review Node version configuration in a separate PR
+
+Consider removing `.node-version` and configuring Node 24 directly in GitHub Actions. Keep the current file until that PR; workflows currently read it through `node-version-file`.
+
+- Find and update every workflow reference before deleting the file.
+- Keep the chosen Node version consistent with `package.json` engines and the setup/testing documentation.
+- Document the effect on local version managers, then validate the shared CI and release verification configuration.
+- This is deferred configuration cleanup, not part of the continuous-selection feature.
