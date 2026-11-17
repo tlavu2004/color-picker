@@ -2,7 +2,9 @@
 
 ## Supported versions
 
-No published release is currently available: the initial v1.0.0 release was withdrawn while community documentation is completed. Security fixes are developed on `main`; this is a development branch, not a promise of a supported production release. After publication, this policy will identify the supported release line.
+The `1.0.x` release line receives security fixes once version 1.0.0 is published. Use the latest published patch in that line. Unreleased development builds and older release lines are not maintained as separate security-support branches.
+
+Fixes are developed on `main` and delivered through new releases. This policy does not imply a guaranteed response time or a fixed support end date.
 
 ## Report a vulnerability
 
