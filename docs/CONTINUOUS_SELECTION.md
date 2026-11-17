@@ -5,7 +5,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 ## Use
 
 1. Load the rebuilt `dist/` extension and reload it after upgrading. The added scripting permission may require acknowledging the browser's extension permission prompt.
-2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off for the original single-pick native EyeDropper.
+2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off to use the same overlay in single-color mode: one accepted click saves and closes it. A failed save keeps it open for retry.
 3. Enable the checkbox and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
 5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count.
@@ -17,7 +17,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 
 The overlay displays a screenshot of the visible tab viewport, not a live page or whole-screen feed. Page JavaScript may continue running underneath; only the displayed view is frozen. Wheel and touch scrolling are blocked during selection. Resizing, viewport scaling changes, page scrolling, or pagehide end the overlay to avoid mismatched coordinates. Pinch zoom must be reset before starting.
 
-The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The native EyeDropper API still ends after one color and is used only by the default single-pick path. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
+The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The same magnifier is used by single-color mode and closes only after a successful save in that mode. Native EyeDropper still ends after one color and is available only through the separate Native screen picker button, independent of the switch; there is no silent native fallback. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
 
 The modal overlay makes the underlying page inert during selection. Its own canvas click handlers prevent normal click actions; clicking a source-page link through the overlay must not navigate. Esc/Stop removes the modal entirely, rather than leaving a blank capture window. Already accepted save requests can finish after exit; no further pixels are accepted after stopping.
 
@@ -33,7 +33,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 ## Code
 
-- `src/services/continuousSelection.ts`: source checks, removal of a prior overlay, capture, active-tab validation, and explicit injection.
+- `src/services/tabSelection.ts`: source checks, removal of a prior overlay, capture, active-tab validation, and explicit injection.
 - `src/content/overlay.ts`: self-contained injected functions, modal/shadow UI, magnifier, pixel mapping, queued persistence, and cleanup. All runtime helpers stay inside the injected function because Chrome serializes it without module imports.
 - `src/services/pickColor.ts`: native picking and the matching ten-color history policy. Keep both storage paths aligned when changing the policy.
 - Vite builds only the popup entry again. The old `src/snapshot/` window and session-transfer code have been removed.
@@ -42,11 +42,12 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-There are 32 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier, three successive pixel saves, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
+There are 36 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
 Manual checklist:
 
-- Verify native single-pick still works with the checkbox off.
+- With the switch off, verify Pick Color opens the same magnifier, saves one color, and exits only after successful storage. With it on, verify the same zoom stays open across multiple selections.
+- Verify Native screen picker explicitly opens the browser EyeDropper, independently of the switch and without capture injection.
 - On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
 - Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
 - Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.

@@ -5,7 +5,7 @@ export function stopOverlay() {
   return { width: innerWidth, height: innerHeight, scale: window.visualViewport?.scale ?? 1 };
 }
 
-export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }): Promise<void> {
+export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }, continuous = false): Promise<void> {
   const scope = window as Window & { __colorPickerStop?: () => void };
   scope.__colorPickerStop?.();
   if (innerWidth !== viewport.width || innerHeight !== viewport.height || (window.visualViewport?.scale ?? 1) !== viewport.scale) {
@@ -15,7 +15,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   if (!dataUrl.startsWith('data:image/png;base64,')) throw new Error('Invalid capture image.');
 
   const host = document.createElement('dialog');
-  host.setAttribute('aria-label', 'Continuous color selection');
+  host.setAttribute('aria-label', continuous ? 'Continuous color selection' : 'Single color selection');
   host.setAttribute('data-color-picker-overlay', '');
   host.style.cssText = 'all:initial!important;position:fixed!important;inset:0!important;margin:0!important;padding:0!important;border:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;overflow:hidden!important;display:block!important;background:transparent!important;';
   // Keep the captured pixels out of the host page's ordinary DOM access.
@@ -43,7 +43,9 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   const panel = document.createElement('div');
   panel.className = 'panel';
   const help = document.createElement('p');
-  help.textContent = 'Frozen view · Click to save colors · Esc or Stop to return to the page';
+  help.textContent = continuous
+    ? 'Frozen view · Click to save colors · Esc or Stop to return to the page'
+    : 'Frozen view · Click one pixel to save and finish · Esc or Stop cancels';
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
   status.textContent = 'Ready. Copy saved colors from the extension popup after finishing.';
@@ -82,6 +84,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   let loadTimeout: number | undefined;
   let rejectLoad: ((reason: Error) => void) | undefined;
   let saveQueue = Promise.resolve();
+  let savingSingle = false;
 
   const stop = () => {
     if (!active) return;
@@ -146,7 +149,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
             return { x, y, hex: '#' + [r, g, b].map(value => value.toString(16).padStart(2, '0')).join('').toUpperCase() };
           }
           function preview(clientX: number, clientY: number) {
-            if (!active) return;
+            if (!active || (!continuous && savingSingle)) return;
             try {
               const { x, y, hex } = pixel(clientX, clientY);
               const radius = 4;
@@ -178,10 +181,14 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
           imageCanvas.addEventListener('click', event => {
             event.preventDefault();
             event.stopPropagation();
-            if (!active) return;
+            if (!active || (!continuous && savingSingle)) return;
             let hex: string;
             try { hex = pixel(event.clientX, event.clientY).hex; }
             catch { error.textContent = 'Could not read this pixel. Stop and capture the page again.'; return; }
+            if (!continuous) {
+              savingSingle = true;
+              status.textContent = 'Saving ' + hex + '…';
+            }
             // Serialize accepted clicks so rapid selections do not overwrite each other.
             saveQueue = saveQueue.then(async () => {
               const result = await chrome.storage.local.get({ colors: [] });
@@ -189,8 +196,18 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
               const valid = colors.filter((value): value is string => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)).map(value => value.toUpperCase());
               const next = [...new Set([hex, ...valid])].slice(0, 10);
               await chrome.storage.local.set({ colors: next });
-              if (active) { status.textContent = 'Saved ' + hex + ' · ' + next.length + '/10 recent colors. Keep clicking or press Esc.'; error.textContent = ''; }
-            }).catch(() => { if (active) error.textContent = 'Could not save the color. Click again to retry.'; });
+              if (active) {
+                if (!continuous) { stop(); return; }
+                status.textContent = 'Saved ' + hex + ' · ' + next.length + '/10 recent colors. Keep clicking or press Esc.';
+                error.textContent = '';
+              }
+            }).catch(() => {
+              savingSingle = false;
+              if (active) {
+                error.textContent = 'Could not save the color. Click again to retry.';
+                if (!continuous) status.textContent = 'Not saved. Click a pixel to retry or press Esc.';
+              }
+            });
           });
           document.documentElement.append(host);
           host.showModal();

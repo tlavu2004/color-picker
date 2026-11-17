@@ -2,8 +2,10 @@
 
 ## Implemented on feat/continuous-selection
 
-- Default native single-pixel EyeDropper, Escape cancellation, HEX result/restoration, and explicit Copy/Copied! behavior.
-- A default-off Continuous selection checkbox. Start captures and overlays the visible source tab; it does not open another window.
+- Shared single/continuous tab overlay with the same magnifier, Escape cancellation, HEX restoration, and explicit Copy/Copied! behavior.
+- Single mode exits after one successful save and blocks duplicate clicks while pending; failed saves keep it open for retry.
+- A separate Native screen picker opens the browser EyeDropper explicitly, without silently changing the primary experience.
+- A default-off Continuous selection switch. Start captures and overlays the visible source tab; it does not open another window.
 - A custom persistent magnifier with non-smoothed enlarged pixels, center-pixel marker, and HEX preview.
 - Repeated clicks save colors while the overlay stays active. Accepted writes are serialized and retain the newest ten distinct colors.
 - Esc/Stop removes the entire overlay and restores page interaction. Move controls lets the user reach pixels hidden under the instruction panel.

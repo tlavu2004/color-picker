@@ -4,14 +4,14 @@
 
 Chrome Manifest V3 packages a React 19 + TypeScript popup, built with Vite 7. Vite is a development/build tool, not an extension runtime. The sole HTML entry is `src/index.html`, mounted by `src/main.tsx`.
 
-The default picker uses native EyeDropper for one pixel. Continuous mode captures the source tab and injects a self-contained, isolated-world picker on that same tab. There is no background worker or automatically injected content script.
+The default Pick Color and continuous mode both capture the source tab and inject the same self-contained, isolated-world picker. A boolean mode controls whether it exits after a successful save or keeps accepting pixels. Native EyeDropper is available through a separate explicit button. There is no background worker or automatically injected content script.
 
 ## Source responsibilities
 
-- `src/components/`: popup coordination, the default-off continuous checkbox, and color-result/copy UI.
+- `src/components/`: popup coordination, the default-off continuous switch, and color-result/copy UI.
 - `src/styles/`: popup CSS.
 - `src/services/pickColor.ts`: native picking and ten-color storage normalization, migration, and saving.
-- `src/services/continuousSelection.ts`: prepare/capture/validate/inject orchestration.
+- `src/services/tabSelection.ts`: prepare/capture/validate/inject orchestration.
 - `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
 - `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
 - `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
@@ -19,13 +19,13 @@ The default picker uses native EyeDropper for one pixel. Continuous mode capture
 
 ## Startup and selection
 
-The native path opens EyeDropper during the button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
+The separate Native screen picker button opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
 
-Continuous startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
+Tab-picker startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
 
 The image is decoded without a DOM image URL and drawn on a viewport-sized canvas inside a closed shadow root. A native modal dialog places the overlay above page content and makes underlying controls inert. Constructed styles isolate the picker layout from page CSS. Pointer movement updates a magnifier on animation frames; every click reads that click's captured coordinates directly instead of using a potentially stale preview.
 
-The magnifier remains open after saving. A promise queue serializes accepted color writes. The panel provides status, error feedback, Stop, and Move controls; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes, source scrolling, and pagehide also stop the session. Accepted writes may finish after visual cleanup.
+Continuous mode keeps the magnifier open after saving; a promise queue serializes its accepted writes. Single mode accepts only one click while saving and removes the overlay after success. A failed save unlocks single mode for retry without closing it. The panel provides status, error feedback, Stop, and Move controls; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes, source scrolling, and pagehide also stop the session. Accepted writes may finish after visual cleanup.
 
 ## Storage and permissions
 

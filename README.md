@@ -1,6 +1,6 @@
 # Color Picker
 
-A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use native EyeDropper for one pixel, or continuous selection with a persistent magnifier directly on a frozen view of the source tab.
+A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use the same magnifier on a frozen tab view for single or continuous selection. A separate native screen picker remains available as an explicit alternative.
 
 ## Run locally
 
@@ -16,9 +16,10 @@ Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Lo
 
 ## Pick colors
 
-- Checkbox off: **Pick Color** opens native EyeDropper for one pixel; Esc cancels.
-- Checkbox on: **Start continuous selection** captures the visible tab, opens an overlay with a magnifier on the same tab, and closes the popup. No separate capture window is created.
-- Move the pointer to inspect enlarged pixels and a HEX preview. Click multiple points to save their colors without closing the magnifier.
+- Switch off: **Pick Color** opens the tab overlay and magnifier. One click saves a color and closes the overlay only after the save succeeds.
+- Switch on: **Start continuous selection** captures the visible tab, opens an overlay with a magnifier on the same tab, and closes the popup. No separate capture window is created.
+- Both modes use the same enlarged pixels, center marker, and HEX preview. In continuous mode, click multiple points without closing the magnifier. If saving fails in single mode, the overlay stays open so you can retry.
+- **Native screen picker** explicitly opens the original EyeDropper for one screen pixel, including outside the tab. It is independent of the continuous switch and never selected automatically.
 - Use **Move controls** to reach pixels covered by the instructions.
 - **Esc** or **Stop** removes the image and magnifier and returns to the page. Open the popup to explicitly **Copy** the saved color; picking never changes the clipboard.
 - Saves retain the newest **10** distinct colors. Rapid clicks are serialized so one selection does not overwrite another.
@@ -40,7 +41,7 @@ npm run build
 npm run verify:build
 ```
 
-The 32 mocked tests cover the native service, popup/clipboard, overlay startup/serialization, magnifier, repeated selection, save errors, cleanup, and coordinate mapping. Real tab capture, top-layer interaction, and page CSS/CSP behavior still require browser checks. See the continuous-selection guide for a checklist.
+The 36 mocked tests cover the native service, popup/clipboard, overlay startup/serialization, magnifier, repeated selection, save errors, cleanup, and coordinate mapping. Real tab capture, top-layer interaction, and page CSS/CSP behavior still require browser checks. See the continuous-selection guide for a checklist.
 
 `npm run dev` and `npm run preview` serve `/src/index.html` for layout work only; a loaded extension is required for capture and scripting. Before merging, update this branch from the latest main and preserve its history UI and CI setup.
 

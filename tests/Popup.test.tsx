@@ -42,13 +42,13 @@ describe('popup interactions', () => {
     browser.open.mockReturnValueOnce(selection.promise);
     render(<Popup />);
     await act(async () => {});
-    fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     expect(screen.getByRole('button', { name: 'Picking…' })).toBeDisabled();
     await act(async () => { selection.resolve({ sRGBHex: '#abcdef' }); });
     expect(await screen.findByText('#ABCDEF')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pick Color' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Native screen picker' })).toBeEnabled();
     expect(browser.writeText).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     expect(await screen.findByText('#AABBCC')).toBeInTheDocument();
     expect(browser.open).toHaveBeenCalledTimes(2);
   });
@@ -58,12 +58,12 @@ describe('popup interactions', () => {
     browser.open.mockRejectedValueOnce(new DOMException('Cancelled', 'AbortError'));
     render(<Popup />);
     await screen.findByText('#123456');
-    fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Pick Color' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Native screen picker' })).toBeEnabled());
     expect(screen.getByText('#123456')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(browser.writeText).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     await screen.findByText('#AABBCC');
   });
 
@@ -72,9 +72,9 @@ describe('popup interactions', () => {
     browser.open.mockRejectedValueOnce(new Error('Picker unavailable'));
     render(<Popup />);
     await act(async () => {});
-    fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Picker unavailable');
-    expect(screen.getByRole('button', { name: 'Pick Color' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Native screen picker' })).toBeEnabled();
   });
 
   it('blocks repeated copy while pending and for exactly two seconds after success', async () => {
