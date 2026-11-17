@@ -188,17 +188,9 @@ Developed and maintained by **Trương Lê Anh Vũ** — [@tlavu2004](https://gi
 
 ## Contributing
 
-1. Fork the repository and create a branch from the latest `main`, using a name such as `feat/your-feature`, `fix/your-fix`, or `docs/your-update`.
-2. Install dependencies with `npm ci` and make focused changes. Update the English documentation and both English/Vietnamese UI translations when relevant.
-3. Run the checks in [testing and delivery](docs/guides/TESTING.md). For picker or UI changes, also check the built extension in Chrome/Edge.
-4. Use conventional commit messages, such as `feat: add a feature`, `fix: correct picker behavior`, or `docs: update setup instructions`.
-5. Push your branch to your fork and open a pull request targeting `main`. Describe the change, how it was verified, and include screenshots for visible UI changes.
+Bug reports, translations, documentation improvements, and focused code changes are welcome. See the [contribution guide](.github/CONTRIBUTING.md) for setup, branch/commit conventions, checks, screenshots, and pull requests.
 
-For bug reports, include reproduction steps, expected and actual behavior, browser/extension versions, and relevant zoom or display-scaling settings. Avoid including sensitive page content in screenshots or logs.
-
-Documentation screenshots belong in `docs/images/`, using descriptive names such as `popup-en.png` or `continuous-picker.png`. Capture the current interface on neutral sample content, without personal information. Link from this README using `docs/images/...` and from Markdown files inside `docs/guides/` using `../images/...`.
-
-For security vulnerabilities, contact [the maintainer](mailto:truongleanhvu20052004@gmail.com) privately instead of publishing exploit details in an issue.
+Follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities privately using the [security policy](.github/SECURITY.md). See the [accessibility statement](ACCESSIBILITY.md) for current support, limitations, and how to report barriers.
 
 ## License
 
