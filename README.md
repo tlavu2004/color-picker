@@ -75,3 +75,19 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 - [Precision selection investigation backlog](docs/BACKLOG.md)
 - [Continuous selection behavior and browser checklist](docs/CONTINUOUS_SELECTION.md)
 - [Testing, coverage, and delivery](docs/TESTING.md)
+
+## Authors
+
+| Student ID | Full name | GitHub |
+| --- | --- | --- |
+| 22120443 | Trương Lê Anh Vũ | [tlavu2004](https://github.com/tlavu2004) |
+
+## Contributing
+
+1. Fork the repository and create a branch from the latest `main`, using a name such as `feat/your-feature`, `fix/your-fix`, or `docs/your-update`.
+2. Install dependencies with `npm ci` and make focused changes. Update the English documentation and both English/Vietnamese UI translations when relevant.
+3. Run the checks in [testing and delivery](docs/TESTING.md). For picker or UI changes, also check the built extension in Chrome/Edge.
+4. Use conventional commit messages, such as `feat: add a feature`, `fix: correct picker behavior`, or `docs: update setup instructions`.
+5. Push your branch to your fork and open a pull request targeting `main`. Describe the change, how it was verified, and include screenshots for visible UI changes.
+
+For bug reports, include reproduction steps, expected and actual behavior, browser/extension versions, and relevant zoom or display-scaling settings. Avoid including sensitive page content in screenshots or logs.
