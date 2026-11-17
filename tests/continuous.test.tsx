@@ -19,6 +19,24 @@ function setup() {
 }
 
 describe('continuous overlay startup', () => {
+  it('blocks native picking in continuous mode and enables it again when switched off', async () => {
+    const api = setup();
+    render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
+    const toggle = screen.getByRole('switch', { name: 'Continuous selection' });
+    const native = screen.getByRole('button', { name: 'Native screen picker' });
+    await waitFor(() => expect(native).toBeEnabled());
+    fireEvent.click(toggle);
+    expect(native).toBeDisabled();
+    expect(native).toHaveAccessibleDescription('Native picker supports one color at a time. Turn off continuous selection to use it.');
+    fireEvent.click(native);
+    expect(api.browser.open).not.toHaveBeenCalled();
+    fireEvent.click(toggle);
+    expect(native).toBeEnabled();
+    fireEvent.click(native);
+    await screen.findByText('#AABBCC');
+    expect(api.browser.open).toHaveBeenCalledOnce();
+  });
   it('removes the old overlay before capture and injects the new image into the same tab', async () => {
     const api = setup();
     await startTabSelection();
@@ -122,6 +140,7 @@ describe('continuous overlay startup', () => {
     expect(screen.getByRole('button', { name: 'Start continuous selection' })).toBeEnabled();
     expect(close).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText('Advanced'));
+    fireEvent.click(screen.getByRole('switch', { name: 'Continuous selection' }));
     fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     await screen.findByText('#AABBCC');
     expect(api.browser.open).toHaveBeenCalledOnce();

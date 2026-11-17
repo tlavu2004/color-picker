@@ -74,7 +74,7 @@ const Popup: React.FC = () => {
   }, [text.loadError]);
 
   const handlePickColor = async (native = false) => {
-    if (busy) return;
+    if (busy || (native && continuous)) return;
     setCopied(false);
     setError('');
     setPicking(true);
@@ -175,7 +175,8 @@ const Popup: React.FC = () => {
       <details className="advanced-options">
         <summary>{text.advanced}</summary>
         <p className="continuous-note">{text.nativeNote}</p>
-        <button className="native-picker-button" onClick={() => void handlePickColor(true)} disabled={busy}>
+        {continuous && <p id="native-mode-note" className="continuous-note">{text.nativeSingleOnly}</p>}
+        <button className="native-picker-button" onClick={() => void handlePickColor(true)} disabled={busy || continuous} aria-describedby={continuous ? 'native-mode-note' : undefined}>
           {text.nativePicker}
         </button>
       </details>
