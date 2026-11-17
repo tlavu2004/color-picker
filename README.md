@@ -75,12 +75,12 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 - [Precision selection investigation backlog](docs/BACKLOG.md)
 - [Continuous selection behavior and browser checklist](docs/CONTINUOUS_SELECTION.md)
 - [Testing, coverage, and delivery](docs/TESTING.md)
+- [Privacy and local data handling](docs/PRIVACY.md)
+- [Changelog](CHANGELOG.md)
 
-## Authors
+## Author
 
-| Student ID | Full name | GitHub |
-| --- | --- | --- |
-| 22120443 | Trương Lê Anh Vũ | [tlavu2004](https://github.com/tlavu2004) |
+Developed and maintained by **Trương Lê Anh Vũ** — [@tlavu2004](https://github.com/tlavu2004).
 
 ## Contributing
 
@@ -91,3 +91,9 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 5. Push your branch to your fork and open a pull request targeting `main`. Describe the change, how it was verified, and include screenshots for visible UI changes.
 
 For bug reports, include reproduction steps, expected and actual behavior, browser/extension versions, and relevant zoom or display-scaling settings. Avoid including sensitive page content in screenshots or logs.
+
+For security vulnerabilities, contact [the maintainer](mailto:truongleanhvu20052004@gmail.com) privately instead of publishing exploit details in an issue.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). The release archive includes the project license notice. Third-party dependencies retain their respective licenses.
