@@ -32,7 +32,7 @@ No minimum percentage is enforced. The report measures mocked application behavi
 - Coverage is shown in the Actions job summary and uploaded as an artifact. The package artifact contains `color-picker-extension.zip` and its checksum, with `manifest.json` at the ZIP root. Download and extract the ZIP before using Load unpacked. Reports/packages are retained for 14 days.
 - **Release package** runs only on a pushed `v*` tag. It calls the same verification workflow, then a separate publishing job (10-minute timeout) downloads that exact artifact, checks the tag against the verified manifest version, verifies SHA-256, and publishes the ZIP/checksum to a GitHub release. It never rebuilds the archive after verification.
 - Only the release publishing job has contents-write permission. No Chrome Web Store deployment, credential setup, or automatic tag creation is configured. The same-tag release concurrency group does not cancel an active publication.
-- Before releasing, update `public/manifest.json` and keep package metadata consistent. A manifest version of `1.0` requires tag `v1.0`. Do not push a version tag until ready to publish.
+- Before releasing, update `public/manifest.json` and keep package metadata consistent. The prepared version is `1.0.0` in the manifest, package, and lockfile; its release tag is `v1.0.0`. Do not push a version tag until ready to publish.
 - Third-party Actions are pinned to verified full commit SHAs. Dependabot checks npm dependencies weekly and GitHub Actions monthly, grouping compatible npm updates and Actions updates into reviewable PRs.
 
 Run `npm run coverage:summary` after coverage to preview the job summary locally. The summary uses report counters, has no coverage threshold, and reports missing output without claiming coverage. The summary formatter has its own tests. A new workflow can be checked with actionlint; hosted CI runs when a PR is opened/updated, on main, or through manual dispatch. No release tag is pushed as part of implementation.
@@ -63,3 +63,28 @@ Compatible dependency updates were applied while adding the test toolchain. The 
 ## Custom picker verification
 
 The custom picker and worker tests cover capture/injection ordering, single and continuous modes, pixel mapping, serialized saves, errors, cleanup, session validation, and popup restoration. Follow the [continuous-selection browser checklist](CONTINUOUS_SELECTION.md) for real capture, scrolling, focus, and popup behavior. Native tests explicitly use Advanced → Native screen picker.
+
+## Publish version 1.0.0
+
+1. Review and merge the release-preparation PR into `main`. Wait for CI on that main commit to pass.
+2. Download the verified CI package, extract it, and load it unpacked. Check English/Vietnamese/Auto, single and continuous selection, Esc/Stop and popup return, ten-color history, and explicit copying. Browser-native dialogs follow the browser language.
+3. Update the local main with a clean working tree:
+
+   ```powershell
+   git switch main
+   git pull --ff-only origin main
+   ```
+
+4. Confirm `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Confirm the intended release commit is checked out and that `v1.0.0` does not already exist remotely. Never move an existing published version tag to another commit.
+5. Create and verify the signed tag, then push only that tag:
+
+   ```powershell
+   git tag -s v1.0.0 -m "Color Picker 1.0.0"
+   git tag -v v1.0.0
+   git push origin v1.0.0
+   ```
+
+6. The tag push starts Release package. It verifies the tagged commit, checks the tag matches the manifest, and publishes the verified ZIP and SHA-256 checksum to GitHub Releases. Let the workflow create the release; do not manually pre-create one with the same tag.
+7. Confirm the workflow succeeded and both assets are present. Users extract the ZIP and load that folder unpacked; this does not install or publish the extension through Chrome Web Store.
+
+The preparation branch does not create a tag or publish a release. Precision controls and the proposed `.node-version` cleanup remain deferred.

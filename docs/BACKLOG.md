@@ -2,9 +2,9 @@
 
 ## Precise pixel selection
 
-Status: investigate for a future feature PR; outside the current bug-fix scope.
+Status: advanced precision controls are deferred to a future feature PR.
 
-User observation: moving the mouse in the native EyeDropper can appear to skip pixels, making thin borders difficult to target. The cause is not yet confirmed. The current extension delegates selection to `EyeDropper.open()` and does not process pointer coordinates.
+User observation: moving the mouse in the native EyeDropper can appear to skip pixels, making thin borders difficult to target. The cause is not yet confirmed. This observation originally concerned the native EyeDropper. The current default picker maps pointer coordinates onto a frozen tab screenshot and provides a custom magnifier in both single and continuous modes. Native EyeDropper remains an explicit alternative under Advanced.
 
 ### Investigation
 
@@ -16,7 +16,7 @@ User observation: moving the mouse in the native EyeDropper can appear to skip p
 
 ### Possible feature
 
-Keep the native picker as the default. Investigate an optional precision mode using a captured tab image, a magnified pixel grid, and arrow-key movement by one captured-image pixel.
+Build on the existing frozen-tab picker and magnifier. Investigate keyboard movement by one captured-image pixel, configurable zoom, and a dedicated precision grid. Retain native EyeDropper as an explicit alternative; automatic native reopening is not a continuous-selection mechanism.
 
 Evaluate capture permissions, coordinate mapping across zoom/DPI, multiple monitors, and the limitation that a captured image freezes page content. Native EyeDropper does not expose controls for magnification or pointer step size; verify browser capabilities again during implementation.
 
