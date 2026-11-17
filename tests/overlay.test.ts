@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { installOverlay, stopOverlay } from '../src/content/overlay';
 import { deferred, mockBrowser } from './browserMocks';
+import { overlayTranslations } from '../src/i18n/overlayMessages';
 
 const viewport = { width: 100, height: 80, scale: 1 };
 const imageData = 'data:image/png;base64,AA==';
@@ -42,6 +43,16 @@ afterEach(() => {
 });
 
 describe('on-tab frozen picker', () => {
+  it('translates continuous controls and saved-color status without changing persistence', async () => {
+    const { roots, api } = setup();
+    await installOverlay(imageData, viewport, true, '', overlayTranslations.vi);
+    expect(roots[0].textContent).toContain('Chuyển sang góc tiếp theo');
+    expect(roots[0].textContent).toContain('Dừng');
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 20 });
+    await waitFor(() => expect(roots[0].querySelector('[role=status]')).toHaveTextContent('Đã lưu #FF0000'));
+    expect(api.colors()).toEqual(['#FF0000']);
+    expect(api.writeText).not.toHaveBeenCalled();
+  });
   it('shows a saved-color swatch only after persistence and keeps it on failed saves', async () => {
     const { roots, api, context } = setup();
     await installOverlay(imageData, viewport, true);

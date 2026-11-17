@@ -26,14 +26,14 @@ describe('popup interactions', () => {
 		const browser = mockBrowser(['#123456']);
 		const view = render(<StrictMode><Popup /></StrictMode>);
 		await screen.findByText('#123456');
-		expect(browser.listeners.size).toBe(1);
+		expect(browser.listeners.size).toBe(2);
 		view.unmount();
 		expect(browser.listeners.size).toBe(0);
 	});
 
 	it('reports a restoration failure', async () => {
 		const browser = mockBrowser();
-		browser.get.mockRejectedValueOnce(new Error('Storage unavailable'));
+		browser.get.mockRejectedValue(new Error('Storage unavailable'));
 		render(<Popup />);
 		fireEvent.click(screen.getByText('Advanced'));
 		expect(await screen.findByRole('alert')).toHaveTextContent('Could not load saved colors');
@@ -79,7 +79,7 @@ describe('popup interactions', () => {
 		fireEvent.click(screen.getByText('Advanced'));
 		await act(async () => { });
 		fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
-		expect(await screen.findByRole('alert')).toHaveTextContent('Picker unavailable');
+		expect(await screen.findByRole('alert')).toHaveTextContent('Could not pick or save the color');
 		expect(screen.getByRole('button', { name: 'Native screen picker' })).toBeEnabled();
 	});
 

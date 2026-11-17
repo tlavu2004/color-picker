@@ -5,17 +5,18 @@ export function stopOverlay() {
   return { width: innerWidth, height: innerHeight, scale: window.visualViewport?.scale ?? 1 };
 }
 
-export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }, continuous = false, sessionId = ''): Promise<void> {
+export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }, continuous = false, sessionId = '', labels: Record<string, string> = {}): Promise<void> {
+  const t = (value: string) => labels[value] ?? value;
   const scope = window as Window & { __colorPickerStop?: () => void };
   scope.__colorPickerStop?.();
   if (innerWidth !== viewport.width || innerHeight !== viewport.height || (window.visualViewport?.scale ?? 1) !== viewport.scale) {
-    throw new Error('The viewport changed during capture. Start selection again.');
+    throw new Error(t('The viewport changed during capture. Start selection again.'));
   }
-  if (viewport.scale !== 1) throw new Error('Reset pinch zoom before starting continuous selection.');
-  if (!dataUrl.startsWith('data:image/png;base64,')) throw new Error('Invalid capture image.');
+  if (viewport.scale !== 1) throw new Error(t('Reset pinch zoom before starting continuous selection.'));
+  if (!dataUrl.startsWith('data:image/png;base64,')) throw new Error(t('Invalid capture image.'));
 
   const host = document.createElement('dialog');
-  host.setAttribute('aria-label', continuous ? 'Continuous color selection' : 'Single color selection');
+  host.setAttribute('aria-label', continuous ? t('Continuous color selection') : t('Single color selection'));
   host.setAttribute('data-color-picker-overlay', '');
   host.style.cssText = 'all:initial!important;position:fixed!important;inset:0!important;margin:0!important;padding:0!important;border:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;overflow:hidden!important;display:block!important;background:transparent!important;';
   // Keep the captured pixels out of the host page's ordinary DOM access.
@@ -42,16 +43,16 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   root.adoptedStyleSheets = [sheet];
   const imageCanvas = document.createElement('canvas');
   imageCanvas.className = 'image';
-  imageCanvas.setAttribute('aria-label', 'Frozen tab image');
+  imageCanvas.setAttribute('aria-label', t('Frozen tab image'));
   const panel = document.createElement('div');
   panel.className = 'panel';
   const help = document.createElement('p');
   help.textContent = continuous
-    ? 'Frozen view · Click to save colors · Esc or Stop to return to the page'
-    : 'Frozen view · Click one pixel to save and finish · Esc or Stop cancels';
+    ? t('Frozen view · Click to save colors · Esc or Stop to return to the page')
+    : t('Frozen view · Click one pixel to save and finish · Esc or Stop cancels');
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
-  status.textContent = 'Ready. Copy saved colors from the extension popup after finishing.';
+  status.textContent = t('Ready. Copy saved colors from the extension popup after finishing.');
   const savedResult = document.createElement('div');
   savedResult.className = 'saved-result';
   const savedSwatch = document.createElement('span');
@@ -63,10 +64,10 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   error.setAttribute('role', 'alert');
   const stopButton = document.createElement('button');
   stopButton.type = 'button';
-  stopButton.textContent = 'Stop';
+  stopButton.textContent = t('Stop');
   const moveButton = document.createElement('button');
   moveButton.type = 'button';
-  moveButton.textContent = 'Move to next corner';
+  moveButton.textContent = t('Move to next corner');
   let corner = 0;
   moveButton.addEventListener('click', () => {
     corner = (corner + 1) % 4;
@@ -114,7 +115,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
     zoom.width = zoom.height = 0;
     if (scope.__colorPickerStop === abandon) delete scope.__colorPickerStop;
     if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
-    rejectLoad?.(new Error('Selection cancelled before the image was ready.'));
+    rejectLoad?.(new Error(t('Selection cancelled before the image was ready.')));
     rejectLoad = undefined;
     if (ready && sessionId && typeof chrome.runtime?.sendMessage === 'function') {
       // Wait for accepted clicks to persist before the popup reads the result.
@@ -163,17 +164,17 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
       void createImageBitmap(new Blob([bytes], { type: 'image/png' })).then(image => {
         if (!active) { image.close(); return; }
         try {
-          if (!image.width || !image.height) throw new Error('The captured image is empty.');
+          if (!image.width || !image.height) throw new Error(t('The captured image is empty.'));
           const context = imageCanvas.getContext('2d', { willReadFrequently: true });
           const magnifier = zoom.getContext('2d');
-          if (!context || !magnifier) throw new Error('Could not prepare the pixel picker.');
+          if (!context || !magnifier) throw new Error(t('Could not prepare the pixel picker.'));
           imageCanvas.width = image.width;
           imageCanvas.height = image.height;
           context.drawImage(image, 0, 0);
           image.close();
           function pixel(clientX: number, clientY: number) {
             const bounds = imageCanvas.getBoundingClientRect();
-            if (!bounds.width || !bounds.height) throw new Error('The capture viewport is unavailable.');
+            if (!bounds.width || !bounds.height) throw new Error(t('The capture viewport is unavailable.'));
             const x = Math.max(0, Math.min(imageCanvas.width - 1, Math.floor((clientX - bounds.left) * imageCanvas.width / bounds.width)));
             const y = Math.max(0, Math.min(imageCanvas.height - 1, Math.floor((clientY - bounds.top) * imageCanvas.height / bounds.height)));
             const [r, g, b] = context!.getImageData(x, y, 1, 1).data;
@@ -202,7 +203,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
               loupe.hidden = false;
               loupe.style.left = Math.max(0, Math.min(innerWidth - 148, clientX + 20 > innerWidth - 148 ? clientX - 168 : clientX + 20)) + 'px';
               loupe.style.top = Math.max(0, Math.min(innerHeight - 180, clientY + 20 > innerHeight - 180 ? clientY - 200 : clientY + 20)) + 'px';
-            } catch { error.textContent = 'Could not preview this pixel. Stop and capture the page again.'; }
+            } catch { error.textContent = t('Could not preview this pixel. Stop and capture the page again.'); }
           }
           let pointer = { x: innerWidth / 2, y: innerHeight / 2 };
           imageCanvas.addEventListener('pointermove', event => {
@@ -215,10 +216,10 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
             if (!active || (!continuous && savingSingle)) return;
             let hex: string;
             try { hex = pixel(event.clientX, event.clientY).hex; }
-            catch { error.textContent = 'Could not read this pixel. Stop and capture the page again.'; return; }
+            catch { error.textContent = t('Could not read this pixel. Stop and capture the page again.'); return; }
             if (!continuous) {
               savingSingle = true;
-              status.textContent = 'Saving ' + hex + '…';
+              status.textContent = t('Saving {hex}…').replace('{hex}', hex);
             }
             // Serialize accepted clicks so rapid selections do not overwrite each other.
             saveQueue = saveQueue.then(async () => {
@@ -231,14 +232,14 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
                 if (!continuous) { stop('selected'); return; }
                 savedSwatch.style.backgroundColor = hex;
                 savedSwatch.hidden = false;
-                status.textContent = 'Saved ' + hex + ' · ' + next.length + '/10 recent colors. Keep clicking or press Esc.';
+                status.textContent = t('Saved {hex} · {count}/10 recent colors. Keep clicking or press Esc.').replace('{hex}', hex).replace('{count}', String(next.length));
                 error.textContent = '';
               }
             }).catch(() => {
               savingSingle = false;
               if (active) {
-                error.textContent = 'Could not save the color. Click again to retry.';
-                if (!continuous) status.textContent = 'Not saved. Click a pixel to retry or press Esc.';
+                error.textContent = t('Could not save the color. Click again to retry.');
+                if (!continuous) status.textContent = t('Not saved. Click a pixel to retry or press Esc.');
               }
             });
           });
@@ -251,7 +252,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
           ready = true;
           resolve();
         } catch (reason) { image.close(); reject(reason); }
-      }).catch(() => reject(new Error('Could not decode the captured image.')));
+      }).catch(() => reject(new Error(t('Could not decode the captured image.'))));
     });
   } catch (reason) {
     stop();

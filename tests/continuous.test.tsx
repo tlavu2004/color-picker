@@ -24,7 +24,7 @@ describe('continuous overlay startup', () => {
     await startTabSelection();
     expect(api.execute.mock.calls[0][0]).toMatchObject({ target: { tabId: 7 }, func: stopOverlay });
     expect(api.execute.mock.invocationCallOrder[0]).toBeLessThan(api.capture.mock.invocationCallOrder[0]);
-    expect(api.execute.mock.calls[1][0]).toMatchObject({ target: { tabId: 7, documentIds: ['source-document'] }, func: installOverlay, args: ['data:image/png;base64,AA==', { width: 100, height: 80, scale: 1 }, false, expect.any(String)] });
+    expect(api.execute.mock.calls[1][0]).toMatchObject({ target: { tabId: 7, documentIds: ['source-document'] }, func: installOverlay, args: ['data:image/png;base64,AA==', { width: 100, height: 80, scale: 1 }, false, expect.any(String), {}] });
     expect(api.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'PICKER_BEGIN', documentId: 'source-document' }));
     expect(api.sendMessage).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'PICKER_ARM' }));
     expect(api.createWindow).not.toHaveBeenCalled();

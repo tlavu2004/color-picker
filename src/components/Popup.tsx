@@ -4,8 +4,10 @@ import { clearHistory, normalizeColors, pickColor, readHistory } from '../servic
 import { ColorResult } from './ColorResult';
 import { startTabSelection } from '../services/tabSelection';
 import { ColorHistory } from './ColorHistory';
+import { useLanguage } from '../i18n/useLanguage';
 
 const Popup: React.FC = () => {
+  const { language, text, preference, changeLanguage, saving, problem } = useLanguage();
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [picking, setPicking] = useState(false);
@@ -16,7 +18,7 @@ const Popup: React.FC = () => {
   const [colors, setColors] = useState<string[]>([]);
   const [clearing, setClearing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const busy = loading || picking || copying || clearing;
+  const busy = loading || picking || copying || clearing || saving;
 
   useEffect(() => {
     if (!copied) {
@@ -60,7 +62,7 @@ const Popup: React.FC = () => {
         setColor(history[0] ?? null);
       }
     }).catch(() => {
-      if (active) setError('Could not load saved colors. Please try again.');
+      if (active) setError(text.loadError);
     }).finally(() => {
       if (active) setLoading(false);
     });
@@ -69,7 +71,7 @@ const Popup: React.FC = () => {
       active = false;
       chrome.storage.onChanged.removeListener(onChanged);
     };
-  }, []);
+  }, [text.loadError]);
 
   const handlePickColor = async (native = false) => {
     if (busy) return;
@@ -79,7 +81,7 @@ const Popup: React.FC = () => {
 
     try {
       if (!native) {
-        await startTabSelection(continuous);
+        await startTabSelection(continuous, language);
         window.close();
         return;
       }
@@ -92,8 +94,8 @@ const Popup: React.FC = () => {
     } catch (error) {
       setError(
         error instanceof Error
-          ? error.message
-          : 'Could not pick or save the color.'
+          ? error.message.includes('scripting permission') ? text.scriptingError : error.message.includes('HTTP/HTTPS') ? text.restrictedError : error.message.includes('active tab changed') ? text.tabChangedError : error.message.includes('EyeDropper support') ? text.unsupported : text.pickError
+          : text.pickError
       );
     } finally {
       setPicking(false);
@@ -111,7 +113,7 @@ const Popup: React.FC = () => {
       setColor(null);
       setCopied(false);
     } catch {
-      setError('Could not clear history. Please try again.');
+      setError(text.clearError);
     } finally {
       setClearing(false);
     }
@@ -132,7 +134,7 @@ const Popup: React.FC = () => {
       await navigator.clipboard.writeText(color);
       setCopied(true);
     } catch {
-      setError('Could not copy the color. Please try again.');
+      setError(text.copyError);
     } finally {
       setCopying(false);
     }
@@ -140,7 +142,15 @@ const Popup: React.FC = () => {
 
   return (
     <div className="popup-container">
-      <h2>Color Picker</h2>
+      <h2>{text.title}</h2>
+      <label className="language-setting">
+        <span>{text.language}</span>
+        <select value={preference} disabled={busy} onChange={event => void changeLanguage(event.target.value)}>
+          <option value="auto">{text.auto}</option>
+          <option value="en">English</option>
+          <option value="vi">Tiếng Việt</option>
+        </select>
+      </label>
       <label className="continuous-setting">
         <input
           className="switch-input"
@@ -154,27 +164,27 @@ const Popup: React.FC = () => {
           }}
         />
         <span className="switch-track" aria-hidden="true" />
-        <span>Continuous selection</span>
+        <span>{text.continuous}</span>
       </label>
       <p className="continuous-note">{continuous
-        ? 'Frozen tab view. Keep selecting colors until Esc or Stop.'
-        : 'Frozen tab view. Select one color to save and finish.'}</p>
+        ? text.continuousNote
+        : text.singleNote}</p>
       <button onClick={() => void handlePickColor()} disabled={busy}>
-        {picking ? 'Picking…' : continuous ? 'Start continuous selection' : 'Pick Color'}
+        {picking ? text.picking : continuous ? text.startContinuous : text.pick}
       </button>
       <details className="advanced-options">
-        <summary>Advanced</summary>
-        <p className="continuous-note">Native picking keeps this popup open and may cover part of the screen. Use Pick Color above for an unobstructed tab view.</p>
+        <summary>{text.advanced}</summary>
+        <p className="continuous-note">{text.nativeNote}</p>
         <button className="native-picker-button" onClick={() => void handlePickColor(true)} disabled={busy}>
-          Native screen picker
+          {text.nativePicker}
         </button>
       </details>
-      {error && <p role="alert">{error}</p>}
+      {(error || problem) && <p role="alert">{error || (problem && text[problem])}</p>}
 
       {color && (
-        <ColorResult color={color} copying={copying} copied={copied} disabled={picking || clearing || loading} onCopy={handleCopy} />
+        <ColorResult color={color} copying={copying} copied={copied} disabled={picking || clearing || loading} onCopy={handleCopy} copyLabel={text.copy} copiedLabel={text.copied} />
       )}
-      <ColorHistory colors={colors} selected={color} disabled={busy} onSelect={handleSelectColor} onClear={handleClearHistory} />
+      <ColorHistory text={text} colors={colors} selected={color} disabled={busy} onSelect={handleSelectColor} onClear={handleClearHistory} />
     </div>
   );
 };

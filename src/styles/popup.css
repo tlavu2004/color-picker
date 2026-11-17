@@ -23,7 +23,7 @@ button {
 }
 
 .copy-button {
-  width: 76px;
+  width: 96px;
   flex-shrink: 0;
 }
 
@@ -173,4 +173,17 @@ button:focus-visible {
 .empty-history {
   color: #555;
   font-size: 12px;
+}
+.language-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.language-setting select {
+  padding: 4px;
+  max-width: 150px;
 }

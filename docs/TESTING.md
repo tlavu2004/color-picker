@@ -50,11 +50,11 @@ Run `npm run coverage:summary` after coverage to preview the job summary locally
 
 ## History and CI integration status
 
-The history and CI branches originally started at commit `a069d30`. CI has since been merged into `main` and incorporated together with history into this continuous-selection branch. The current service stores at most ten distinct colors; the old 50-color limit describes legacy data only.
+The history and CI branches originally started at commit `a069d30`. CI has since been merged into `main` and incorporated together with history into this localization integration. The current service stores at most ten distinct colors; the old 50-color limit describes legacy data only.
 
 `tests/pickColor.test.mjs` has been removed in favor of Vitest. The five cases in `tests/history.integration.test.tsx` run on this branch because its history service is present. A skipped history suite here should be investigated rather than treated as an expected baseline result.
 
-Run all checks above after resolving merge conflicts and before completing the merge commit. Use that run's test counts and coverage results; earlier results from separate branches are not a substitute for checking the final merged tree. For the subsequent localization PR, preserve the ten-color service/UI, shared CI configuration, and all relevant tests when resolving conflicts.
+Run all checks above after resolving merge conflicts and before completing the merge commit. Use that run's test counts and coverage results; earlier results from separate branches are not a substitute for checking the final merged tree. This localization integration preserves the ten-color service/UI, shared CI configuration, and all relevant tests when resolving conflicts.
 
 ## Dependency audit
 

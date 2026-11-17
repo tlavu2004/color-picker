@@ -1,3 +1,5 @@
+import { overlayTranslations } from '../i18n/overlayMessages';
+import type { Language } from '../i18n/messages';
 import { installOverlay, stopOverlay } from '../content/overlay';
 
 const launchPorts = new Set<chrome.runtime.Port>();
@@ -6,7 +8,7 @@ async function lifecycleMessage(message: Record<string, unknown>) {
   if (!response?.ok) throw new Error(response?.error || 'Reload Color Picker to enable popup restoration.');
 }
 
-export async function startTabSelection(continuous = false): Promise<void> {
+export async function startTabSelection(continuous = false, language: Language = 'en'): Promise<void> {
   if (typeof chrome.scripting?.executeScript !== 'function') {
     throw new Error('Tab selection needs the scripting permission. Open chrome://extensions (or edge://extensions), reload Color Picker, then close and reopen this popup.');
   }
@@ -29,7 +31,7 @@ export async function startTabSelection(continuous = false): Promise<void> {
     await lifecycleMessage({ type: 'PICKER_BEGIN', sessionId, tabId: tab.id, windowId: tab.windowId,
       documentId: source.documentId, url: tab.url, continuous });
     await chrome.scripting.executeScript({ target: { tabId: tab.id, documentIds: [source.documentId] },
-      func: installOverlay, args: [image, viewport, continuous, sessionId] });
+      func: installOverlay, args: [image, viewport, continuous, sessionId, overlayTranslations[language]] });
     await lifecycleMessage({ type: 'PICKER_ARM', sessionId });
     // The caller closes the popup. The port disconnect is the worker's signal
     // that it is safe to reopen later, even if selection finished very quickly.
