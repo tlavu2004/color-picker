@@ -11,8 +11,8 @@ node_modules
 dist
 dist-ssr
 coverage
-color-picker-extension.zip
-color-picker-extension.zip.sha256
+color-picker.zip
+color-picker.zip.sha256
 *.local
 
 # Editor directories and files
