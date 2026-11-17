@@ -1,43 +1,34 @@
 # Color Picker
 
-A Chrome Manifest V3 extension built with React 19 and TypeScript, using Vite 7 for development and production builds. It samples a screen pixel with the browser's native EyeDropper and saves its sRGB HEX value locally.
-
-## Localization
-
-Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/LOCALIZATION.md).
+A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use the same magnifier on a frozen tab view for single or continuous selection. A separate native screen picker remains available as an explicit alternative.
 
 ## Current features
 
-- Select one pixel per click on **Pick Color**, including displayed colors from images, gradients, and composited transparency.
-- Press **Esc** to cancel without changing the saved color or clipboard.
-- View a color swatch and uppercase HEX value; reopening the popup restores the latest color.
-- Click **Copy** to write the HEX value to the clipboard. Selection never copies automatically.
-- The Copy button is disabled while writing. On success, it displays **Copied!** and stays disabled for two seconds before returning to **Copy**. Starting a new selection clears the confirmation.
-- Retain up to 50 distinct colors locally, newest first. Selecting an existing color moves it to the front. Only the latest color is currently displayed; there is no history grid or clear-history action yet.
-- Display errors when selection, storage, or clipboard operations fail, or when EyeDropper is unavailable.
-
-Continuous selection, a recent-color interface, and a precision mode are not implemented. See [features and plans](docs/FEATURES.md) for their status.
+Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. Localization awaits integration from its separate branch.
 
 ## Run locally
 
-Use Node.js 22.22.2+ or 24.15.0+ (validated with Node.js 24) and desktop Chrome or Edge with EyeDropper support.
-
-From the repository root:
+Use desktop Chrome/Edge 127+ and Node.js 24.15.0+ (24.x), matching `.node-version` and CI.
 
 ```powershell
 npm ci
 npm run build
+npm run verify:build
 ```
 
-1. Open `chrome://extensions` (or `edge://extensions`).
-2. Enable **Developer mode**, click **Load unpacked**, and select this project's **dist** directory.
-3. Open Color Picker from the browser's extensions menu; pin it to the toolbar if desired.
-4. Click **Pick Color**, then click a pixel to select it or press **Esc** to cancel.
-5. Click **Copy** when you want the displayed HEX value on the clipboard.
+Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Load unpacked this project's `dist/` directory. After editing, rebuild and Reload the extension. This update adds scripting permission; acknowledge a browser permission prompt if shown. Close any old snapshot window from the previous implementation.
 
-Each click on Pick Color starts one selection. After selecting or cancelling, click it again for the next color.
+## Pick colors
 
-After editing, run `npm run build`, click **Reload** on the extension's card, and reopen the popup. If upgrading from the original version that injected a picker and styles, also refresh existing web tabs to remove those old scripts and styles.
+- Switch off: **Pick Color** opens the tab overlay and magnifier. One click saves a color and closes the overlay only after the save succeeds.
+- Switch on: **Start continuous selection** captures the visible tab, opens an overlay with a magnifier on the same tab, and closes the popup. No separate capture window is created.
+- Both modes use the same enlarged pixels, center marker, and HEX preview. In continuous mode, click multiple points without closing the magnifier. If saving fails in single mode, the overlay stays open so you can retry.
+- Under **Advanced**, **Native screen picker** explicitly opens the original EyeDropper for one screen pixel, including outside the tab. It is independent of the continuous switch and never selected automatically. It keeps the popup open and may obscure part of the screen; use the main tab picker for an unobstructed view.
+- Use **Move to next corner** to reach pixels covered by the instructions.
+- **Esc** or **Stop** removes the image and magnifier and returns to the page. The popup reopens automatically after saves finish if the same source tab/window is still active. It restores the selected mode and latest color; copying remains explicit.
+- Saves retain the newest **10** distinct colors. Rapid clicks are serialized so one selection does not overwrite another.
+
+The displayed tab image is frozen; page code can continue running beneath it. Scrolling is blocked during selection. Resize, viewport changes, or navigation end the overlay. Stop and start again to capture new content. Advanced grid/keyboard precision controls remain deferred.
 
 ## Development commands
 
@@ -47,57 +38,38 @@ After editing, run `npm run build`, click **Reload** on the extension's card, an
 | `npm run build` | Check TypeScript and build the unpacked extension into `dist/` |
 | `npm run preview` | Serve the production build for layout inspection at `/src/index.html` |
 | `npm run lint` | Lint TypeScript and TSX source |
-| `npm test` | Run native selection and localization tests |
+| `npm test` | Run Vitest service and popup tests |
 
-The dev and preview pages do not provide the extension's Chrome Storage API. Use the built extension loaded from `dist/` to verify selection, persistence, and clipboard behavior together. Vite is a build/development tool; no Vite server is needed to use the installed extension.
+## Permissions and data
 
-## Source layout
-
-```text
-src/
-├── index.html
-├── main.tsx
-├── components/
-│   ├── Popup.tsx
-│   └── ColorResult.tsx
-├── styles/
-│   └── popup.css
-└── services/
-    └── pickColor.ts
-```
-
-`public/` contains the manifest and extension icons. `tests/` contains the logic tests, and `docs/` contains architecture, feature plans, and the investigation backlog. The popup uses plain CSS, without Tailwind or Bootstrap.
+Requests **storage**, **activeTab**, and **scripting** for user-started capture/injection. No automatic content script, broad website access, account, or server upload is used. A small module service worker restores the popup for completed/cancelled custom sessions. The screenshot stays in the isolated picker and is not written to local/session storage. Ordinary HTTP/HTTPS pages support the overlay subject to browser injection restrictions; use native picking on restricted pages.
 
 ## Verification
 
 ```powershell
-npm run build
 npm run lint
+npm run test:typecheck
 npm test
+npm run test:coverage
+npm run build
+npm run verify:build
 ```
 
-The six automated tests use mocked EyeDropper and storage APIs. They check that opening is requested synchronously, HEX normalization, deduplication, the 50-color limit, cancellation, unsupported browsers, and selection/storage failures. They do not prove browser user-activation behavior or native picker operation. Popup/clipboard tests, coverage reporting, and CI are planned for a separate PR.
+Vitest and React Testing Library cover history, native selection, popup/clipboard, overlay startup, magnification, queued saves, cleanup, and popup restoration with mocked browser APIs. Real capture, permissions, focus, and page interaction require browser verification. See [testing and delivery](docs/TESTING.md) and the [continuous-selection checklist](docs/CONTINUOUS_SELECTION.md).
 
-Manual review in the loaded extension:
+`npm run dev` and `npm run preview` serve `/src/index.html` for layout work; use the built extension for browser APIs.
 
-- Opening or clicking a web page must not activate the picker or change page styles.
-- Pick pixels from an image, a gradient, and a translucent element; compare their displayed colors.
-- Select a color, select another, then cancel a new selection with Esc. The previous saved color must survive cancellation, and Pick Color must become available again.
-- Close and reopen the popup; the latest selected color must remain visible.
-- Selecting a color must leave the clipboard unchanged. Clicking Copy must paste the displayed HEX value into a text field.
-- After a successful copy, confirm that Copied! appears on the disabled button for two seconds, then returns to Copy. There must be no separate confirmation message.
+## CI and delivery
 
-## Browser support and permissions
-
-The native EyeDropper API is required. Unsupported browsers display an error; there is no CSS-based fallback. Results represent displayed screen pixels in sRGB HEX, rather than original image pixels or CSS declarations.
-
-Only the `storage` extension permission is requested. There is no content script, background worker, website-access permission, account synchronization, or server upload.
-
-The browser controls the native magnifier and pointer movement. Precision concerns involving mouse DPI, display scaling, or zoom are recorded in the [investigation backlog](docs/BACKLOG.md); a custom precision mode is not part of the current implementation.
+GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
 
 ## Documentation
 
-- [Localization behavior and verification](docs/LOCALIZATION.md)
-- [Architecture and source layout](docs/ARCHITECTURE.md)
-- [Existing features and planned work](docs/FEATURES.md)
-- [Precision selection investigation backlog](docs/BACKLOG.md)
+- [Continuous selection behavior and browser checklist](docs/CONTINUOUS_SELECTION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Feature status](docs/FEATURES.md)
+- [Deferred advanced precision investigation](docs/BACKLOG.md)
+
+During selection, wheel/touch gestures are blocked and do not end the frozen-view session. Background page scroll events do not dismiss it. The last successfully saved color is shown as a swatch beside its HEX; failed saves retain the last successful swatch.
+
+- [Testing, coverage, and delivery](docs/TESTING.md)

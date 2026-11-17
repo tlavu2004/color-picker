@@ -49,5 +49,5 @@ export function useLanguage() {
       setSaving(false);
     }
   };
-  return { text: messages[language], preference, changeLanguage, saving, problem };
+  return { language, text: messages[language], preference, changeLanguage, saving, problem };
 }

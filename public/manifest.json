@@ -1,10 +1,17 @@
 {
 	"manifest_version": 3,
+	"minimum_chrome_version": "127",
 	"name": "Color Picker",
 	"version": "1.0",
 	"description": "Pick colors from any webpage",
+	"background": {
+		"service_worker": "background.js",
+		"type": "module"
+	},
 	"permissions": [
-		"storage"
+		"storage",
+		"activeTab",
+		"scripting"
 	],
 	"action": {
 		"default_popup": "src/index.html",

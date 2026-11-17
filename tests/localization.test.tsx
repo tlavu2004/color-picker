@@ -79,4 +79,22 @@ describe('language selection', () => {
     act(() => window.dispatchEvent(new Event('languagechange')));
     expect(screen.getByRole('button', { name: 'Chọn màu' })).toBeInTheDocument();
   });
+
+  it('keeps the product name while translating history and custom picker controls', async () => {
+    const api = browser('vi');
+    render(<Popup />);
+    await screen.findByRole('button', { name: 'Xóa lịch sử' });
+    expect(screen.getByRole('heading', { name: 'Color Picker' })).toBeInTheDocument();
+    expect(document.title).toBe('Color Picker');
+    expect(screen.getByRole('heading', { name: 'Màu gần đây' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chọn #123456' })).toBeInTheDocument();
+    const toggle = screen.getByRole('switch', { name: 'Chọn liên tục' });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Bắt đầu chọn liên tục' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa lịch sử' }));
+    await screen.findByText('Chọn một màu để bắt đầu lịch sử.');
+    expect(api.state.colors).toEqual([]);
+    expect(api.writeText).not.toHaveBeenCalled();
+  });
 });

@@ -1,70 +1,25 @@
 # Features and plans
 
-This document distinguishes implemented behavior from proposals. Planned items are not release commitments.
-
 ## Implemented
 
-| Feature | Current behavior |
-| --- | --- |
-| Pixel color selection | Pick Color opens the native EyeDropper to sample displayed colors from images, gradients, and composited regions |
-| One color per selection | Selection ends after picking; click again for another color |
-| Cancellation | Esc exits without changing the saved color or clipboard |
-| Result display | Color swatch and uppercase sRGB HEX value |
-| Local storage | Up to 50 distinct colors, newest first; selecting an existing color moves it to the front |
-| Popup restoration | Reopening displays the latest color; storage changes update the result |
-| Explicit copy | The clipboard changes only when Copy is clicked |
-| Copy confirmation | The button displays Copied! and is disabled for two seconds; it is also disabled while writing, and its width stays fixed |
-| Error feedback | Reports selection, storage, clipboard, or missing-EyeDropper errors so the user can retry |
-| No page interference | No automatic picker activation, injected scripts/styles, or website-access permissions |
+- **Single selection:** Pick Color opens a frozen view of the visible HTTP/HTTPS tab with a custom pixel magnifier. One successful save ends selection.
+- **Continuous selection:** a default-off switch uses the same magnifier; multiple clicks save colors until Esc or Stop.
+- **Native alternative:** Advanced exposes Native screen picker for one screen pixel. It keeps the popup visible and works independently of the switch.
+- **History:** retain the newest ten distinct uppercase HEX colors locally. Repicking moves a color to the front; selecting a history swatch only changes the displayed result. Clear history removes saved colors. Legacy data is normalized and trimmed to ten on load.
+- **Feedback:** display the selected color and HEX in the popup; the overlay shows the last successfully saved swatch, HEX, history count, and persistence errors.
+- **Explicit copy:** only Copy changes the clipboard. Copied! disables the button for two seconds after success.
+- **Lifecycle:** Esc/Stop removes the custom picker and restores page interaction. The popup returns after queued saves settle when the source tab/window remains active. The worker validates session/document identity; a badge supports manual reopening if the browser refuses automatic return.
+- **Controls:** move instructions between four corners. Wheel/touch scrolling is blocked during selection; actual viewport changes end the frozen session.
+- **Testing and delivery:** Vitest, React Testing Library, source coverage, Node 24 GitHub Actions, verified ZIP/checksum packaging, and tag-triggered GitHub releases. Coverage is informational; Web Store deployment is not configured.
 
-There is no interface for browsing the 50 stored colors yet. Fifty is the current storage limit, not the number of visible swatches.
+Screenshots remain transient and are never uploaded or saved in extension storage. The custom picker requires storage, activeTab, and scripting permissions; it is explicitly started and has no automatic content script or broad host permissions.
 
-## Proposed for the next feature PR
+## Separate implementation awaiting integration
 
-### Color history interface
-
-- A recent-color grid, with 10 visible colors proposed. The earlier suggestion of 12 was only for a four-column, three-row layout, not a product requirement.
-- Newest colors first, without duplicates when selecting an existing color.
-- Click a swatch to view its HEX value. Copy remains a separate action and does not happen automatically.
-- An action to clear history.
-- During implementation, decide whether to retain 50 stored colors and display only 10, or reduce the storage limit as well. Existing data behavior has not changed.
-
-### Continuous selection toggle: feasibility investigation required
-
-- A toggle that defaults to off is proposed.
-- Desired behavior: when enabled, select several colors in a session; Esc ends the session.
-- Test EyeDropper's user-activation requirement before committing to reopening it automatically after each selection.
-- If the native API cannot support the desired flow, evaluate alternatives and discuss them before implementation. This may become a separate PR.
-
-Neither feature above is implemented in the current bug-fix branch.
-
-## Planned for a separate testing and CI PR
-
-- Popup tests for color restoration, storage updates, and selection/cancellation interactions.
-- Clipboard tests for success, failure, button disabling, the two-second confirmation, and reset when changing colors.
-- Adjust the test setup so coverage maps correctly to TypeScript source rather than relying only on a module executed in a VM.
-- Introduce coverage reporting first, without a mandatory threshold or treating a percentage as a substitute for behavior checks.
-- Add GitHub Actions to run build, lint, and tests; agree on coverage configuration in that PR.
-- Continue checking the native EyeDropper in a real browser because mocks cannot replace that verification.
-
-The current baseline consists of six selection/storage tests, plus local build and lint commands. There is no CI workflow or coverage report yet.
+Localization is implemented on `feat/localization` and has not been integrated here. English/Vietnamese labels, Auto language fallback, and persisted preferences must be reconciled with the new history and custom picker UI when that branch is integrated.
 
 ## Future work, not scheduled for immediate implementation
 
-### Precise pixel selection
+Advanced precision controls remain deferred: keyboard stepping by one captured pixel, configurable zoom, and a dedicated precision grid. Investigate mouse DPI, acceleration, display scaling, browser zoom, and multiple monitors before attributing skipped pixels to application code. The current magnifier does not implement these controls.
 
-The user observed that the cursor appears to skip some pixels. The cause is unconfirmed. First compare mouse DPI, pointer speed/acceleration, display scaling, browser zoom, and multiple monitors.
-
-A possible approach is a separate mode using a captured tab image, a magnified pixel grid, and arrow keys that move by one image pixel. Evaluate permissions, coordinate mapping, and the limitation of frozen page content. Keep native selection as the default if this mode is added.
-
-See the [investigation backlog and acceptance criteria](BACKLOG.md).
-
-## Current branch scope
-
-The `fix/color-picker-bugs` branch fixes picker, storage, popup, clipboard, and copy-feedback issues. It also includes the requested source and documentation cleanup. History UI, continuous selection, precision selection, and CI/coverage are recorded only and are not implemented in this work.
-
-After merging the current branch, create each PR branch from the updated `main`. Proposed names are `feat/color-history` and `ci/tests-and-coverage`. Finalize the continuous-selection scope after its feasibility investigation.
-
-## Implemented independently: localization
-
-The feat/localization branch adds Auto / English / Tiếng Việt, persisted preference, translated labels/errors/copy feedback, and language tests. See [localization](LOCALIZATION.md). It starts from main and does not include other feature branches.
+See [the investigation backlog](BACKLOG.md), [continuous selection](CONTINUOUS_SELECTION.md), and [testing and delivery](TESTING.md).

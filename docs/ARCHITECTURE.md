@@ -1,83 +1,57 @@
 # Color Picker architecture
 
-This document replaces `color-picker-extension.txt` and describes the structure after the bug fixes and source cleanup.
+## Stack and entry
 
-## Technology
+Chrome Manifest V3 packages a React 19 + TypeScript popup, built with Vite 7. Vite is a development/build tool, not an extension runtime. The sole HTML entry is `src/index.html`, mounted by `src/main.tsx`.
 
-- **Chrome Manifest V3** declares the extension, icons, popup, and permissions.
-- **React 19 + TypeScript** implement the popup interface and application logic.
-- **Vite 7** provides the development server and production build; it is not an extension background runtime.
-- **EyeDropper API** opens the browser's native pixel picker and returns an sRGB HEX color.
-- **Chrome Storage API** stores color history locally.
-- **Clipboard API** writes to the clipboard only when the user clicks Copy.
+The default Pick Color and continuous mode both capture the source tab and inject the same self-contained, isolated-world picker. A boolean mode controls whether it exits after a successful save or keeps accepting pixels. Native EyeDropper is available through a separate explicit button. A module service worker restores the popup after custom selection; there is no automatically injected content script.
 
-The current version has no background service worker or content script. Those components in the original text outline were removed when selection switched to the native EyeDropper.
+## Source responsibilities
 
-## Source layout
+- `src/components/`: popup coordination, the default-off continuous switch, and color-result/copy UI.
+- `src/styles/`: popup CSS.
+- `src/services/pickColor.ts`: native picking and ten-color storage normalization, migration, and saving.
+- `src/services/tabSelection.ts`: prepare/capture/validate/inject orchestration and launch-port handshake.
+- `src/background/`: completion-message validation, session state, source lifecycle invalidation, and popup restoration.
+- `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
+- `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
+- `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
+- `docs/`: architecture, feature status, continuous-mode guide, and deferred precision investigation.
 
-```text
-color-picker-extension/
-├── public/
-│   ├── manifest.json
-│   └── icons/                    # Icons referenced by the manifest
-├── src/
-│   ├── index.html                # Popup HTML entry
-│   ├── main.tsx                  # Mounts React with StrictMode
-│   ├── components/
-│   │   ├── Popup.tsx             # Coordinates state and interactions
-│   │   └── ColorResult.tsx       # Color swatch, HEX, and Copy/Copied! button
-│   ├── styles/
-│   │   └── popup.css             # Popup styles
-│   └── services/
-│       └── pickColor.ts          # Opens EyeDropper and saves history
-├── tests/
-│   └── pickColor.test.mjs        # Selection/storage tests with mocks
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── FEATURES.md
-│   └── BACKLOG.md                # Investigations and development proposals
-├── README.md                     # Setup, build, and manual verification
-├── vite.config.ts
-├── tsconfig*.json
-└── package.json
-```
+## Startup and selection
 
-The application has a single popup entry, so `index.html` and `main.tsx` live directly in `src/` without an extra `popup/` directory. Code is grouped by responsibility: components in `components/`, styles in `styles/`, and selection/storage logic in `services/`. Directories are not created for unimplemented features. `Popup.tsx` still manages storage subscriptions, clipboard interactions, and UI state because the application is small.
+The Native screen picker button under Advanced opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
 
-## Runtime flow
+Tab-picker startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
 
-1. The manifest opens `src/index.html` from the extension package.
-2. `main.tsx` mounts `Popup`, which subscribes to storage changes and loads the latest color.
-3. Clicking Pick Color calls `pickColor()`. EyeDropper opens before any `await` to preserve user activation.
-4. Selecting a pixel returns a HEX value. The service converts it to uppercase, reads history, and saves the selected color at the front. Duplicates are removed, and at most 50 colors are retained.
-5. The popup displays the saved color. Reopening the popup reads the first history entry.
-6. Clicking Copy writes the HEX value to the clipboard. The button is disabled while writing. On success, it displays Copied! and stays disabled for two seconds before returning to Copy. There is no separate Copied! message.
-7. Starting a new selection or receiving a color-history storage change clears the copy confirmation. Cancelling with Esc does not save a color or change the clipboard.
+The image is decoded without a DOM image URL and drawn on a viewport-sized canvas inside a closed shadow root. A native modal dialog places the overlay above page content and makes underlying controls inert. Constructed styles isolate the picker layout from page CSS. Pointer movement updates a magnifier on animation frames; every click reads that click's captured coordinates directly instead of using a potentially stale preview.
 
-EyeDropper, storage, and clipboard errors are displayed in the popup. The storage listener and copy-confirmation timer are cleaned up when the component unmounts. Only the latest color has a visible result; there is no history grid yet.
+Continuous mode keeps the magnifier open after saving; a promise queue serializes its accepted writes. Single mode accepts only one click while saving and removes the overlay after success. A failed save unlocks single mode for retry without closing it. The panel provides status, error feedback, Stop, and Move to next corner; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes and pagehide also stop the session. Non-passive window capture listeners block wheel/touch gestures and are removed on exit; background/nested scroll events do not end a frozen-view session. Accepted writes may finish after visual cleanup.
 
-## Data and permissions
+The recent-color grid shows up to ten colors. Selecting a swatch changes the visible result without copying or reordering history. Clear history persists an empty list. Loading and pending operations disable conflicting popup actions.
 
-`chrome.storage.local` stores a `colors: string[]` key, for example `['#AABBCC', '#123456']`. Entries are ordered newest first, with at most 50 distinct colors. Data is not synchronized through an account or sent to a server.
+## Storage and permissions
 
-The manifest requests only the `storage` permission. The current architecture does not require website access, `activeTab`, `scripting`, or tab capture. A future precision mode based on captured images would require another review of permissions and data scope.
+`chrome.storage.local.colors` contains the newest ten distinct uppercase HEX values. Legacy history is normalized and trimmed. The injected storage path cannot import module helpers, so its matching ten-color policy is enclosed and tested separately. Screenshots are never written to local or session storage and are never uploaded.
+
+The manifest requests storage, activeTab, and scripting. Script injection is explicit, top-frame-only, and user initiated; broad website host access is not requested. Browser-restricted pages may reject injection even when capture is possible; the UI reports failure and native single-pick remains the alternative.
+
+The view is frozen, not the underlying application's execution. It does not track page updates, animations, scrolling, other apps, or browser chrome. Stop and restart to capture fresh content. Closed shadow DOM reduces ordinary host-page access to the screenshot canvas but is not a general browser security boundary.
 
 ## Build and verification
 
-`npm run build` runs TypeScript and then Vite. Vite uses `src/index.html` as its entry, writes output to `dist/`, and copies `public/`. The manifest in `dist/` points to the corresponding HTML entry. Use Load unpacked with `dist`, not `src`.
+Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so the new scripting permission and popup code are applied. The old snapshot HTML/window entry and session transfer are removed.
 
-`npm run dev` serves the interface at `/src/index.html`. The development page does not replace an extension environment with the Chrome Storage API.
+Run lint, test typechecking, Vitest, coverage, and `verify:build`. Coverage includes the popup, services, and injected module and excludes only the mounting entry. Tests include serialization of injected functions and DOM cleanup, but capture/injection/top-layer behavior still needs a real Chrome check.
 
-`npm test` uses the Node test runner, transpiles the TypeScript module inside the test harness, and executes it in a VM with EyeDropper/storage mocks. There are currently six logic tests. `npm run lint` checks TS/TSX source. CI, coverage reporting, and popup integration tests are planned for a separate PR.
+See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for branch scope, and the [backlog](BACKLOG.md) for deferred advanced precision work.
 
-## Limitations
+`npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI and release reuse `.github/workflows/verify.yml` on Node.js 24, selected through `.node-version`. Coverage is summarized in Actions. The verification job uploads a ZIP and SHA-256 checksum; the release job downloads and publishes that verified archive without rebuilding. See [testing and delivery](TESTING.md) for details and manual verification.
 
-- A desktop browser with EyeDropper support is required; the UI reports an error if the API is unavailable.
-- Each opening selects one color; continuous selection is not implemented.
-- The browser controls the cursor and magnifier. The extension does not receive pointer coordinates or movement events during native selection.
-- The result is the displayed pixel's sRGB HEX value, rather than a CSS declaration or an original image pixel before zoom/compositing.
-- Mock tests do not verify native behavior; manual Chrome/Edge checks are still required.
+## Popup restoration
 
-For DPI/scaling investigation details, see the [backlog](BACKLOG.md). For product status, see [features and plans](FEATURES.md).
+Chrome/Edge 127+ is required for action.openPopup. The action popup closes after the custom picker is armed. A launch port lets the worker wait until it really closes, avoiding a close/reopen race for fast selections. After save success or Esc/Stop, the overlay sends completion only after accepted writes settle.
 
-Reference: [EyeDropper specification](https://wicg.github.io/eyedropper-api/).
+Session metadata and the last custom mode are stored in in-memory storage.session, not screenshots. The worker validates extension, tab, frame, document ID, and random session ID; it consumes each completion once. It rechecks the source tab URL, active tab, and focused window before opening the popup. Navigation, tab closure/activation away, superseding sessions, viewport cleanup, and expired sessions do not request a popup in another context. Metadata allows normal worker restarts without losing a pending return.
+
+If Chrome refuses popup opening, saved colors remain intact and a dot badge allows a manual icon click. Opening the popup clears the badge. Native mode keeps the existing popup visible and is isolated in the collapsed Advanced section with an explanation of that limitation.
