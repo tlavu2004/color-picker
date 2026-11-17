@@ -2,6 +2,25 @@
 
 A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use the same magnifier on a frozen tab view for single or continuous selection. A separate native screen picker remains available as an explicit alternative.
 
+## Contents
+
+- [Current features](#current-features)
+- [Localization](#localization)
+- [Install from GitHub Releases](#install-from-github-releases)
+- [Build from source](#build-from-source)
+- [Pick colors](#pick-colors)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Development commands](#development-commands)
+- [Permissions and data](#permissions-and-data)
+- [Troubleshooting](#troubleshooting)
+- [Verification](#verification)
+- [CI and delivery](#ci-and-delivery)
+- [Documentation](#documentation)
+- [Author](#author)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Localization
 
 Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/LOCALIZATION.md).
@@ -50,6 +69,37 @@ Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Lo
 
 The displayed tab image is frozen; page code can continue running beneath it. Scrolling is blocked during selection. Resize, viewport changes, or navigation end the overlay. Stop and start again to capture new content. Advanced grid/keyboard precision controls remain deferred.
 
+## Architecture
+
+The popup starts selection, displays history, and handles explicit copying. The custom picker runs on the source tab; a background service worker coordinates returning to the popup after selection ends.
+
+```mermaid
+flowchart TD
+    Popup[React popup] --> Capture[Capture visible tab on user request]
+    Capture --> Overlay[Frozen image and custom magnifier]
+    Overlay -->|Save selected HEX| Storage[Local color history]
+    Popup -->|Read history and language| Storage
+    Popup -->|Advanced option| Native[Browser EyeDropper]
+    Native -->|Save selected HEX| Storage
+    Overlay -->|Completion after queued saves| Worker[Background service worker]
+    Worker -->|Validate source context and reopen| Popup
+```
+
+Screenshots stay in memory. Temporary popup-return metadata is kept in session storage. See [architecture and source responsibilities](docs/ARCHITECTURE.md) for lifecycle details and [privacy](docs/PRIVACY.md) for data handling.
+
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| Extension platform | Chrome Manifest V3, activeTab/scripting APIs, module service worker |
+| Popup | React 19, TypeScript, plain CSS |
+| Custom picker | Canvas, ImageBitmap, modal dialog, closed shadow DOM |
+| Build and development | Vite 7, Node.js 24, npm |
+| Tests | Vitest, React Testing Library, jsdom, V8 coverage |
+| Delivery | GitHub Actions, version-tagged ZIP releases and SHA-256 checksums |
+
+Vite builds the extension; installed users do not need a Vite server or Node.js.
+
 ## Development commands
 
 | Command | Purpose |
@@ -63,6 +113,20 @@ The displayed tab image is frozen; page code can continue running beneath it. Sc
 ## Permissions and data
 
 Requests **storage**, **activeTab**, and **scripting** for user-started capture/injection. No automatic content script, broad website access, account, or server upload is used. A small module service worker restores the popup for completed/cancelled custom sessions. The screenshot stays in the isolated picker and is not written to local/session storage. Ordinary HTTP/HTTPS pages support the overlay subject to browser injection restrictions; use native picking on restricted pages.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Load unpacked cannot find the manifest | Extract the extension ZIP and select the folder directly containing `manifest.json`. For a source build, select `dist/`. |
+| The popup says scripting permission is unavailable | Reload the extension on `chrome://extensions` or `edge://extensions`, acknowledge new permissions if prompted, then close and reopen the popup. Reloading only the website does not apply manifest changes. |
+| Custom picking fails on a restricted page | Use an ordinary HTTP/HTTPS page or explicitly choose Advanced → Native screen picker. Browser restrictions can prevent injection. |
+| The overlay ends after resizing or zooming | This protects coordinate mapping. Finish changing the viewport, reset pinch zoom, and start a new capture. |
+| The captured page looks out of date | Custom selection uses a frozen screenshot. Stop and start again to capture the current visible page. |
+| The popup does not reopen | Keep the source tab active and its window focused. Navigation or viewport cleanup cancels automatic return. If the browser refuses opening, click the extension icon; a dot badge may indicate saved results. |
+| An update seems unchanged | Check the loaded extension's folder, rebuild if using source, click Reload on its card, and reopen the popup. Disable duplicate unpacked installations while checking. |
+
+If the problem persists, include reproduction steps and browser/extension versions in a bug report. The [continuous-selection guide](docs/CONTINUOUS_SELECTION.md) includes additional browser checks.
 
 ## Verification
 
@@ -107,6 +171,8 @@ Developed and maintained by **Trương Lê Anh Vũ** — [@tlavu2004](https://gi
 5. Push your branch to your fork and open a pull request targeting `main`. Describe the change, how it was verified, and include screenshots for visible UI changes.
 
 For bug reports, include reproduction steps, expected and actual behavior, browser/extension versions, and relevant zoom or display-scaling settings. Avoid including sensitive page content in screenshots or logs.
+
+Documentation screenshots belong in `docs/images/`, using descriptive names such as `popup-en.png` or `continuous-picker.png`. Capture the current interface on neutral sample content, without personal information. Link from this README using `docs/images/...` and from Markdown files inside `docs/` using `images/...`.
 
 For security vulnerabilities, contact [the maintainer](mailto:truongleanhvu20052004@gmail.com) privately instead of publishing exploit details in an issue.
 
