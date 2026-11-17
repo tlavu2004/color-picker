@@ -14,6 +14,7 @@ function builtFile(reference, base = dist) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(builtFile('manifest.json'), 'utf8'));
+assert.equal(fs.readFileSync(builtFile('LICENSE'), 'utf8'), fs.readFileSync('LICENSE', 'utf8'), 'Packaged license must match the project license');
 
 assert.equal(manifest.manifest_version, 3);
 

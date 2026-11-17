@@ -180,10 +180,10 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
             const [r, g, b] = context!.getImageData(x, y, 1, 1).data;
             return { x, y, hex: '#' + [r, g, b].map(value => value.toString(16).padStart(2, '0')).join('').toUpperCase() };
           }
-          function preview(clientX: number, clientY: number) {
+          function preview(clientX: number, clientY: number, sample?: ReturnType<typeof pixel>) {
             if (!active || (!continuous && savingSingle)) return;
             try {
-              const { x, y, hex } = pixel(clientX, clientY);
+              const { x, y, hex } = sample ?? pixel(clientX, clientY);
               const radius = 4;
               const cell = 14;
               const sx = Math.max(0, x - radius), sy = Math.max(0, y - radius);
@@ -206,16 +206,37 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
             } catch { error.textContent = t('Could not preview this pixel. Stop and capture the page again.'); }
           }
           let pointer = { x: innerWidth / 2, y: innerHeight / 2 };
+          let releasedPointer: { x: number; y: number } | undefined;
           imageCanvas.addEventListener('pointermove', event => {
+            releasedPointer = undefined;
             pointer = { x: event.clientX, y: event.clientY };
             if (frame === null) frame = requestAnimationFrame(() => { frame = null; preview(pointer.x, pointer.y); });
           });
+          imageCanvas.addEventListener('pointerup', event => {
+            // Pointer events preserve fractional CSS coordinates. Compatibility
+            // click events can round them, selecting a neighboring screenshot pixel.
+            releasedPointer = event.button === 0 ? { x: event.clientX, y: event.clientY } : undefined;
+          });
+          imageCanvas.addEventListener('pointercancel', () => { releasedPointer = undefined; });
+          imageCanvas.addEventListener('pointerleave', () => { releasedPointer = undefined; });
           imageCanvas.addEventListener('click', event => {
             event.preventDefault();
             event.stopPropagation();
             if (!active || (!continuous && savingSingle)) return;
+            const released = releasedPointer;
+            releasedPointer = undefined;
+            const point = released && Math.abs(released.x - event.clientX) < 1 && Math.abs(released.y - event.clientY) < 1
+              ? released : { x: event.clientX, y: event.clientY };
             let hex: string;
-            try { hex = pixel(event.clientX, event.clientY).hex; }
+            try {
+              const sample = pixel(point.x, point.y);
+              hex = sample.hex;
+              pointer = point;
+              if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
+              // Render and save the same sample, even when a click beats the
+              // pending animation frame at a sharp text/color boundary.
+              preview(point.x, point.y, sample);
+            }
             catch { error.textContent = t('Could not read this pixel. Stop and capture the page again.'); return; }
             if (!continuous) {
               savingSingle = true;

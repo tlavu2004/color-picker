@@ -3,6 +3,7 @@ export type LanguagePreference = 'auto' | Language;
 
 export const messages = {
   en: {
+    nativeSingleOnly: 'Native picker supports one color at a time. Turn off continuous selection to use it.',
     continuous: 'Continuous selection', startContinuous: 'Start continuous selection',
     continuousNote: 'Frozen tab view. Keep selecting colors until Esc or Stop.',
     singleNote: 'Frozen tab view. Select one color to save and finish.',
@@ -22,6 +23,7 @@ export const messages = {
     languageLoadError: 'Could not load the language setting. Using browser language.',
   },
   vi: {
+    nativeSingleOnly: 'Bộ chọn màn hình chỉ hỗ trợ chọn một màu mỗi lần. Tắt chọn liên tục để sử dụng.',
     continuous: 'Chọn liên tục', startContinuous: 'Bắt đầu chọn liên tục',
     continuousNote: 'Ảnh chụp tab cố định. Chọn nhiều màu đến khi nhấn Esc hoặc Dừng.',
     singleNote: 'Ảnh chụp tab cố định. Chọn một màu để lưu và kết thúc.',

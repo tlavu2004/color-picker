@@ -4,7 +4,7 @@
 
 - **Single selection:** Pick Color opens a frozen view of the visible HTTP/HTTPS tab with a custom pixel magnifier. One successful save ends selection.
 - **Continuous selection:** a default-off switch uses the same magnifier; multiple clicks save colors until Esc or Stop.
-- **Native alternative:** Advanced exposes Native screen picker for one screen pixel. It keeps the popup visible and works independently of the switch.
+- **Native alternative:** Advanced exposes Native screen picker for one screen pixel. It keeps the popup visible and is disabled while continuous selection is enabled.
 - **History:** retain the newest ten distinct uppercase HEX colors locally. Repicking moves a color to the front; selecting a history swatch only changes the displayed result. Clear history removes saved colors. Legacy data is normalized and trimmed to ten on load.
 - **Feedback:** display the selected color and HEX in the popup; the overlay shows the last successfully saved swatch, HEX, history count, and persistence errors.
 - **Explicit copy:** only Copy changes the clipboard. Copied! disables the button for two seconds after success.

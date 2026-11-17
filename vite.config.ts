@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), {
+    name: 'include-project-license',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'LICENSE', source: readFileSync(resolve(__dirname, 'LICENSE'), 'utf8') });
+    },
+  }],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

@@ -17,7 +17,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 
 The overlay displays a screenshot of the visible tab viewport, not a live page or whole-screen feed. Page JavaScript may continue running underneath; only the displayed view is frozen. Wheel and touch scrolling are blocked at window capture level during selection. Background/nested scroll events do not dismiss the frozen image. Resizing, viewport scaling changes, or pagehide end the overlay to avoid mismatched coordinates. Pinch zoom must be reset before starting.
 
-The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The same magnifier is used by single-color mode and closes only after a successful save in that mode. Native EyeDropper still ends after one color and is available only through the separate Native screen picker button, independent of the switch; there is no silent native fallback. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
+The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The same magnifier is used by single-color mode and closes only after a successful save in that mode. Native EyeDropper still ends after one color and is available only through the separate Native screen picker button when continuous selection is off; there is no silent native fallback. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
 
 The modal overlay makes the underlying page inert during selection. Its own canvas click handlers prevent normal click actions; clicking a source-page link through the overlay must not navigate. Esc/Stop removes the modal entirely, rather than leaving a blank capture window. Already accepted save requests can finish after exit; no further pixels are accepted after stopping.
 
@@ -47,7 +47,7 @@ Mocked tests cover native selection, popup/clipboard behavior, capture ordering,
 Manual checklist:
 
 - With the switch off, verify Pick Color opens the same magnifier, saves one color, and exits only after successful storage. With it on, verify the same zoom stays open across multiple selections.
-- Expand Advanced and verify Native screen picker explicitly opens the browser EyeDropper, independently of the switch and without capture injection.
+- Expand Advanced and verify Native screen picker explicitly opens the browser EyeDropper, without capture injection when the switch is off; enabling continuous selection must disable the native button and show an explanation.
 - On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
 - Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
 - Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.
