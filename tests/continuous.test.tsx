@@ -52,7 +52,7 @@ describe('continuous overlay startup', () => {
     const api = setup();
     const close = vi.spyOn(window, 'close').mockImplementation(() => {});
     render(<Popup />);
-    const toggle = screen.getByRole('checkbox', { name: 'Continuous selection' });
+    const toggle = screen.getByRole('switch', { name: 'Continuous selection' });
     expect(toggle).not.toBeChecked();
     expect(screen.getByRole('button', { name: 'Pick Color' })).toBeInTheDocument();
     fireEvent.click(toggle);
@@ -60,5 +60,20 @@ describe('continuous overlay startup', () => {
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(api.browser.open).not.toHaveBeenCalled();
     expect(api.createWindow).not.toHaveBeenCalled();
+  });
+
+  it('explains how to reload the extension when scripting permission has not been applied', async () => {
+    const api = setup();
+    Object.assign(chrome, { scripting: undefined });
+    await expect(startContinuousSelection()).rejects.toThrow('reload Color Picker');
+    expect(api.query).not.toHaveBeenCalled();
+    expect(api.capture).not.toHaveBeenCalled();
+    const close = vi.spyOn(window, 'close').mockImplementation(() => {});
+    render(<Popup />);
+    fireEvent.click(screen.getByRole('switch', { name: 'Continuous selection' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start continuous selection' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('scripting permission');
+    expect(screen.getByRole('button', { name: 'Start continuous selection' })).toBeEnabled();
+    expect(close).not.toHaveBeenCalled();
   });
 });

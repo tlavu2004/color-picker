@@ -40,7 +40,7 @@ npm run build
 npm run verify:build
 ```
 
-The 31 mocked tests cover the native service, popup/clipboard, overlay startup/serialization, magnifier, repeated selection, save errors, cleanup, and coordinate mapping. Real tab capture, top-layer interaction, and page CSS/CSP behavior still require browser checks. See the continuous-selection guide for a checklist.
+The 32 mocked tests cover the native service, popup/clipboard, overlay startup/serialization, magnifier, repeated selection, save errors, cleanup, and coordinate mapping. Real tab capture, top-layer interaction, and page CSS/CSP behavior still require browser checks. See the continuous-selection guide for a checklist.
 
 `npm run dev` and `npm run preview` serve `/src/index.html` for layout work only; a loaded extension is required for capture and scripting. Before merging, update this branch from the latest main and preserve its history UI and CI setup.
 

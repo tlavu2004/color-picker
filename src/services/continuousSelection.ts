@@ -1,6 +1,9 @@
 import { installOverlay, stopOverlay } from '../content/overlay';
 
 export async function startContinuousSelection(): Promise<void> {
+  if (typeof chrome.scripting?.executeScript !== 'function') {
+    throw new Error('Continuous selection needs the scripting permission. Open chrome://extensions (or edge://extensions), reload Color Picker, then close and reopen this popup.');
+  }
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id === undefined || tab.windowId === undefined) throw new Error('No active tab is available.');
   if (!tab.url || !/^https?:\/\//i.test(tab.url)) {

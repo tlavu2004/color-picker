@@ -77,8 +77,9 @@ const Popup: React.FC = () => {
     <div className="popup-container">
       <h2>Color Picker</h2>
       <label className="continuous-setting">
-        <input type="checkbox" checked={continuous} disabled={picking || copying} onChange={event => setContinuous(event.target.checked)} />
-        Continuous selection
+        <input className="switch-input" type="checkbox" role="switch" checked={continuous} disabled={picking || copying} onChange={event => setContinuous(event.target.checked)} />
+        <span className="switch-track" aria-hidden="true" />
+        <span>Continuous selection</span>
       </label>
       {continuous && <p className="continuous-note">Freezes the visible tab with a magnifier. Click to save colors; Esc or Stop returns to the page.</p>}
       <button onClick={handlePickColor} disabled={picking}>

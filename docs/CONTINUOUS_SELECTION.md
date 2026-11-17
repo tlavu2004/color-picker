@@ -42,7 +42,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-There are 31 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier, three successive pixel saves, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
+There are 32 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier, three successive pixel saves, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
 Manual checklist:
 
@@ -59,3 +59,7 @@ Manual checklist:
 ## Integration
 
 This branch still needs the normal update from the latest main before its PR is merged. Preserve the history branch's popup grid and the CI branch's verification workflow when resolving conflicts. Localization is implemented on another branch; overlay/popup labels here are English until that integration. Precision work beyond this basic magnifier remains deferred.
+
+## Reload troubleshooting
+
+If the popup reports that scripting permission is unavailable, reload the extension itself on chrome://extensions or edge://extensions, then close and reopen the popup. Reloading only the source webpage does not apply manifest permission changes. Confirm the installed extension points to this project's dist directory. In popup DevTools, chrome.runtime.getManifest().permissions should contain scripting. No capture is attempted until the API is available.
