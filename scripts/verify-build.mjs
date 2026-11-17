@@ -12,6 +12,10 @@ function builtFile(reference, base = dist) {
 
 const manifest = JSON.parse(fs.readFileSync(builtFile('manifest.json'), 'utf8'));
 assert.equal(manifest.manifest_version, 3);
+if (manifest.background?.service_worker) {
+  builtFile(manifest.background.service_worker);
+  assert.equal(manifest.background.type, 'module');
+}
 const popup = builtFile(manifest.action.default_popup);
 for (const icon of Object.values({ ...manifest.icons, ...manifest.action.default_icon })) builtFile(icon);
 function verifyHtml(directory) {

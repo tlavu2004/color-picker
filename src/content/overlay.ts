@@ -5,7 +5,7 @@ export function stopOverlay() {
   return { width: innerWidth, height: innerHeight, scale: window.visualViewport?.scale ?? 1 };
 }
 
-export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }, continuous = false): Promise<void> {
+export async function installOverlay(dataUrl: string, viewport: { width: number; height: number; scale: number }, continuous = false, sessionId = ''): Promise<void> {
   const scope = window as Window & { __colorPickerStop?: () => void };
   scope.__colorPickerStop?.();
   if (innerWidth !== viewport.width || innerHeight !== viewport.height || (window.visualViewport?.scale ?? 1) !== viewport.scale) {
@@ -85,43 +85,49 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   let rejectLoad: ((reason: Error) => void) | undefined;
   let saveQueue = Promise.resolve();
   let savingSingle = false;
+  let ready = false;
 
-  const stop = () => {
+  const stop = (reason: 'selected' | 'cancelled' | 'abandoned' = 'abandoned') => {
     if (!active) return;
     active = false;
     if (frame !== null) cancelAnimationFrame(frame);
     clearTimeout(loadTimeout);
     window.removeEventListener('keydown', onKeyDown, true);
-    window.removeEventListener('resize', stop);
-    window.removeEventListener('pagehide', stop);
-    window.removeEventListener('scroll', stop, true);
-    window.visualViewport?.removeEventListener('resize', stop);
+    window.removeEventListener('resize', abandon);
+    window.removeEventListener('pagehide', abandon);
+    window.removeEventListener('scroll', abandon, true);
+    window.visualViewport?.removeEventListener('resize', abandon);
     host.removeEventListener('cancel', onCancel);
     host.remove();
     imageCanvas.width = imageCanvas.height = 0;
     zoom.width = zoom.height = 0;
-    if (scope.__colorPickerStop === stop) delete scope.__colorPickerStop;
+    if (scope.__colorPickerStop === abandon) delete scope.__colorPickerStop;
     if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
     rejectLoad?.(new Error('Selection cancelled before the image was ready.'));
     rejectLoad = undefined;
+    if (ready && sessionId && typeof chrome.runtime?.sendMessage === 'function') {
+      // Wait for accepted clicks to persist before the popup reads the result.
+      void saveQueue.then(() => chrome.runtime.sendMessage({ type: 'PICKER_FINISHED', sessionId, reason })).catch(() => {});
+    }
   };
+  const abandon = () => stop('abandoned');
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); stop(); }
+    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); stop('cancelled'); }
   }
-  function onCancel(event: Event) { event.preventDefault(); stop(); }
+  function onCancel(event: Event) { event.preventDefault(); stop('cancelled'); }
   const blockScroll = (event: Event) => event.preventDefault();
   root.addEventListener('wheel', blockScroll, { passive: false });
   root.addEventListener('touchmove', blockScroll, { passive: false });
   root.addEventListener('contextmenu', blockScroll);
   root.addEventListener('click', event => event.stopPropagation());
-  stopButton.addEventListener('click', stop);
+  stopButton.addEventListener('click', () => stop('cancelled'));
   host.addEventListener('cancel', onCancel);
   window.addEventListener('keydown', onKeyDown, true);
-  window.addEventListener('resize', stop);
-  window.addEventListener('pagehide', stop);
-  window.addEventListener('scroll', stop, true);
-  window.visualViewport?.addEventListener('resize', stop);
-  scope.__colorPickerStop = stop;
+  window.addEventListener('resize', abandon);
+  window.addEventListener('pagehide', abandon);
+  window.addEventListener('scroll', abandon, true);
+  window.visualViewport?.addEventListener('resize', abandon);
+  scope.__colorPickerStop = abandon;
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -197,7 +203,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
               const next = [...new Set([hex, ...valid])].slice(0, 10);
               await chrome.storage.local.set({ colors: next });
               if (active) {
-                if (!continuous) { stop(); return; }
+                if (!continuous) { stop('selected'); return; }
                 status.textContent = 'Saved ' + hex + ' · ' + next.length + '/10 recent colors. Keep clicking or press Esc.';
                 error.textContent = '';
               }
@@ -215,6 +221,7 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
           preview(pointer.x, pointer.y);
           clearTimeout(loadTimeout);
           rejectLoad = undefined;
+          ready = true;
           resolve();
         } catch (reason) { image.close(); reject(reason); }
       }).catch(() => reject(new Error('Could not decode the captured image.')));

@@ -9,6 +9,7 @@ describe('popup interactions', () => {
   it('restores the latest color and tracks only local storage changes', async () => {
     const browser = mockBrowser(['#123456', '#654321']);
     const view = render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     expect(await screen.findByText('#123456')).toBeInTheDocument();
     act(() => browser.emit(['#ABCDEF'], 'sync'));
     expect(screen.getByText('#123456')).toBeInTheDocument();
@@ -33,6 +34,7 @@ describe('popup interactions', () => {
     const browser = mockBrowser();
     browser.get.mockRejectedValueOnce(new Error('Storage unavailable'));
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load saved colors');
   });
 
@@ -41,6 +43,7 @@ describe('popup interactions', () => {
     const selection = deferred<{ sRGBHex: string }>();
     browser.open.mockReturnValueOnce(selection.promise);
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await act(async () => {});
     fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     expect(screen.getByRole('button', { name: 'Picking…' })).toBeDisabled();
@@ -57,6 +60,7 @@ describe('popup interactions', () => {
     const browser = mockBrowser(['#123456']);
     browser.open.mockRejectedValueOnce(new DOMException('Cancelled', 'AbortError'));
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await screen.findByText('#123456');
     fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Native screen picker' })).toBeEnabled());
@@ -71,6 +75,7 @@ describe('popup interactions', () => {
     const browser = mockBrowser();
     browser.open.mockRejectedValueOnce(new Error('Picker unavailable'));
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await act(async () => {});
     fireEvent.click(screen.getByRole('button', { name: 'Native screen picker' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Picker unavailable');
@@ -82,6 +87,7 @@ describe('popup interactions', () => {
     const copy = deferred<void>();
     browser.writeText.mockReturnValueOnce(copy.promise);
     const view = render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await screen.findByText('#123456');
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
@@ -105,6 +111,7 @@ describe('popup interactions', () => {
   it('resets copy feedback when a different color arrives', async () => {
     const browser = mockBrowser(['#123456']);
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await screen.findByText('#123456');
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await screen.findByRole('button', { name: 'Copied!' });
@@ -118,6 +125,7 @@ describe('popup interactions', () => {
     const browser = mockBrowser(['#123456']);
     browser.writeText.mockRejectedValueOnce(new Error('Permission denied'));
     render(<Popup />);
+    fireEvent.click(screen.getByText('Advanced'));
     await screen.findByText('#123456');
     await user.click(screen.getByRole('button', { name: 'Copy' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not copy');

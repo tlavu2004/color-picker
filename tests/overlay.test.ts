@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { installOverlay, stopOverlay } from '../src/content/overlay';
-import { mockBrowser } from './browserMocks';
+import { deferred, mockBrowser } from './browserMocks';
 
 const viewport = { width: 100, height: 80, scale: 1 };
 const imageData = 'data:image/png;base64,AA==';
@@ -193,5 +193,43 @@ describe('on-tab frozen picker', () => {
     expect(document.querySelector('dialog')).not.toBeInTheDocument();
     expect(api.set).not.toHaveBeenCalled();
     expect(api.writeText).not.toHaveBeenCalled();
+  });
+
+  it('notifies popup return only after the single-color save is persisted', async () => {
+    const { roots, api } = setup();
+    const sendMessage = vi.fn(async () => ({ ok: true }));
+    Object.assign(chrome, { runtime: { sendMessage } });
+    await installOverlay(imageData, viewport, false, 'session');
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 20 });
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'PICKER_FINISHED', sessionId: 'session', reason: 'selected' }));
+    expect(sendMessage.mock.invocationCallOrder[0]).toBeGreaterThan(api.set.mock.invocationCallOrder[0]);
+    expect(api.colors()).toEqual(['#FF0000']);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for pending writes before notifying cancellation', async () => {
+    const { roots, api } = setup();
+    const save = deferred<void>();
+    api.set.mockReturnValueOnce(save.promise);
+    const sendMessage = vi.fn(async () => ({ ok: true }));
+    Object.assign(chrome, { runtime: { sendMessage } });
+    await installOverlay(imageData, viewport, true, 'session');
+    fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 20 });
+    await waitFor(() => expect(api.set).toHaveBeenCalled());
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(document.querySelector('dialog')).not.toBeInTheDocument();
+    expect(sendMessage).not.toHaveBeenCalled();
+    save.resolve();
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'PICKER_FINISHED', sessionId: 'session', reason: 'cancelled' }));
+  });
+
+  it('marks viewport cleanup as abandonment instead of requesting popup return', async () => {
+    setup();
+    const sendMessage = vi.fn(async () => ({ ok: true }));
+    Object.assign(chrome, { runtime: { sendMessage } });
+    await installOverlay(imageData, viewport, true, 'session');
+    window.dispatchEvent(new Event('resize'));
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'PICKER_FINISHED', sessionId: 'session', reason: 'abandoned' }));
   });
 });

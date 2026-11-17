@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../styles/popup.css';
 import { pickColor } from '../services/pickColor';
 import { ColorResult } from './ColorResult';
@@ -11,6 +11,7 @@ const Popup: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [copying, setCopying] = useState(false);
   const [continuous, setContinuous] = useState(false);
+  const modeTouched = useRef(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -20,6 +21,14 @@ const Popup: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    if (typeof chrome.storage.session?.get === 'function') {
+      void chrome.storage.session.get({ pickerPopupMode: false }).then(result => {
+        if (active && !modeTouched.current) setContinuous(result.pickerPopupMode === true);
+      }).catch(() => {});
+    }
+    if (typeof chrome.runtime?.sendMessage === 'function') {
+      void chrome.runtime.sendMessage({ type: 'PICKER_POPUP_OPENED' }).catch(() => {});
+    }
     const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
       if (area === 'local' && changes.colors) {
         setCopied(false);
@@ -77,7 +86,7 @@ const Popup: React.FC = () => {
     <div className="popup-container">
       <h2>Color Picker</h2>
       <label className="continuous-setting">
-        <input className="switch-input" type="checkbox" role="switch" checked={continuous} disabled={picking || copying} onChange={event => setContinuous(event.target.checked)} />
+        <input className="switch-input" type="checkbox" role="switch" checked={continuous} disabled={picking || copying} onChange={event => { modeTouched.current = true; setContinuous(event.target.checked); }} />
         <span className="switch-track" aria-hidden="true" />
         <span>Continuous selection</span>
       </label>
@@ -87,9 +96,13 @@ const Popup: React.FC = () => {
       <button onClick={() => void handlePickColor()} disabled={picking || copying}>
         {picking ? 'Picking…' : continuous ? 'Start continuous selection' : 'Pick Color'}
       </button>
-      <button className="native-picker-button" onClick={() => void handlePickColor(true)} disabled={picking || copying}>
-        Native screen picker
-      </button>
+      <details className="advanced-options">
+        <summary>Advanced</summary>
+        <p className="continuous-note">Native picking keeps this popup open and may cover part of the screen. Use Pick Color above for an unobstructed tab view.</p>
+        <button className="native-picker-button" onClick={() => void handlePickColor(true)} disabled={picking || copying}>
+          Native screen picker
+        </button>
+      </details>
       {error && <p role="alert">{error}</p>}
 
       {color && (
