@@ -23,7 +23,7 @@ A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use 
 
 ## Localization
 
-Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/LOCALIZATION.md).
+Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/guides/LOCALIZATION.md).
 
 ## Current features
 
@@ -85,7 +85,7 @@ flowchart TD
     Worker -->|Validate source context and reopen| Popup
 ```
 
-Screenshots stay in memory. Temporary popup-return metadata is kept in session storage. See [architecture and source responsibilities](docs/ARCHITECTURE.md) for lifecycle details and [privacy](docs/PRIVACY.md) for data handling.
+Screenshots stay in memory. Temporary popup-return metadata is kept in session storage. See [architecture and source responsibilities](docs/guides/ARCHITECTURE.md) for lifecycle details and [privacy](docs/guides/PRIVACY.md) for data handling.
 
 ## Tech stack
 
@@ -126,7 +126,7 @@ Requests **storage**, **activeTab**, and **scripting** for user-started capture/
 | The popup does not reopen | Keep the source tab active and its window focused. Navigation or viewport cleanup cancels automatic return. If the browser refuses opening, click the extension icon; a dot badge may indicate saved results. |
 | An update seems unchanged | Check the loaded extension's folder, rebuild if using source, click Reload on its card, and reopen the popup. Disable duplicate unpacked installations while checking. |
 
-If the problem persists, include reproduction steps and browser/extension versions in a bug report. The [continuous-selection guide](docs/CONTINUOUS_SELECTION.md) includes additional browser checks.
+If the problem persists, include reproduction steps and browser/extension versions in a bug report. The [continuous-selection guide](docs/guides/CONTINUOUS_SELECTION.md) includes additional browser checks.
 
 ## Verification
 
@@ -139,23 +139,23 @@ npm run build
 npm run verify:build
 ```
 
-Vitest and React Testing Library cover history, native selection, popup/clipboard, overlay startup, magnification, queued saves, cleanup, and popup restoration with mocked browser APIs. Real capture, permissions, focus, and page interaction require browser verification. See [testing and delivery](docs/TESTING.md) and the [continuous-selection checklist](docs/CONTINUOUS_SELECTION.md).
+Vitest and React Testing Library cover history, native selection, popup/clipboard, overlay startup, magnification, queued saves, cleanup, and popup restoration with mocked browser APIs. Real capture, permissions, focus, and page interaction require browser verification. See [testing and delivery](docs/guides/TESTING.md) and the [continuous-selection checklist](docs/guides/CONTINUOUS_SELECTION.md).
 
 `npm run dev` and `npm run preview` serve `/src/index.html` for layout work; use the built extension for browser APIs.
 
 ## CI and delivery
 
-GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
+GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/guides/TESTING.md) before creating a release tag.
 
 ## Documentation
 
-- [Localization behavior and verification](docs/LOCALIZATION.md)
-- [Architecture and source layout](docs/ARCHITECTURE.md)
-- [Existing features and planned work](docs/FEATURES.md)
-- [Precision selection investigation backlog](docs/BACKLOG.md)
-- [Continuous selection behavior and browser checklist](docs/CONTINUOUS_SELECTION.md)
-- [Testing, coverage, and delivery](docs/TESTING.md)
-- [Privacy and local data handling](docs/PRIVACY.md)
+- [Localization behavior and verification](docs/guides/LOCALIZATION.md)
+- [Architecture and source layout](docs/guides/ARCHITECTURE.md)
+- [Existing features and planned work](docs/guides/FEATURES.md)
+- [Precision selection investigation backlog](docs/guides/BACKLOG.md)
+- [Continuous selection behavior and browser checklist](docs/guides/CONTINUOUS_SELECTION.md)
+- [Testing, coverage, and delivery](docs/guides/TESTING.md)
+- [Privacy and local data handling](docs/guides/PRIVACY.md)
 - [Changelog](CHANGELOG.md)
 
 ## Author
@@ -166,13 +166,13 @@ Developed and maintained by **Trương Lê Anh Vũ** — [@tlavu2004](https://gi
 
 1. Fork the repository and create a branch from the latest `main`, using a name such as `feat/your-feature`, `fix/your-fix`, or `docs/your-update`.
 2. Install dependencies with `npm ci` and make focused changes. Update the English documentation and both English/Vietnamese UI translations when relevant.
-3. Run the checks in [testing and delivery](docs/TESTING.md). For picker or UI changes, also check the built extension in Chrome/Edge.
+3. Run the checks in [testing and delivery](docs/guides/TESTING.md). For picker or UI changes, also check the built extension in Chrome/Edge.
 4. Use conventional commit messages, such as `feat: add a feature`, `fix: correct picker behavior`, or `docs: update setup instructions`.
 5. Push your branch to your fork and open a pull request targeting `main`. Describe the change, how it was verified, and include screenshots for visible UI changes.
 
 For bug reports, include reproduction steps, expected and actual behavior, browser/extension versions, and relevant zoom or display-scaling settings. Avoid including sensitive page content in screenshots or logs.
 
-Documentation screenshots belong in `docs/images/`, using descriptive names such as `popup-en.png` or `continuous-picker.png`. Capture the current interface on neutral sample content, without personal information. Link from this README using `docs/images/...` and from Markdown files inside `docs/` using `images/...`.
+Documentation screenshots belong in `docs/images/`, using descriptive names such as `popup-en.png` or `continuous-picker.png`. Capture the current interface on neutral sample content, without personal information. Link from this README using `docs/images/...` and from Markdown files inside `docs/guides/` using `../images/...`.
 
 For security vulnerabilities, contact [the maintainer](mailto:truongleanhvu20052004@gmail.com) privately instead of publishing exploit details in an issue.
 

@@ -16,7 +16,7 @@ The default Pick Color and continuous mode both capture the source tab and injec
 - `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
 - `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
 - `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
-- `docs/`: architecture, feature status, continuous-mode guide, and deferred precision investigation.
+- `docs/guides/`: architecture, feature status, continuous-mode guide, and deferred precision investigation.
 
 ## Startup and selection
 
