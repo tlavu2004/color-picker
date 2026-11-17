@@ -103,10 +103,11 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
     if (frame !== null) cancelAnimationFrame(frame);
     clearTimeout(loadTimeout);
     window.removeEventListener('keydown', onKeyDown, true);
-    window.removeEventListener('resize', abandon);
+    window.removeEventListener('resize', onViewportChange);
     window.removeEventListener('pagehide', abandon);
-    window.removeEventListener('scroll', abandon, true);
-    window.visualViewport?.removeEventListener('resize', abandon);
+    window.removeEventListener('wheel', blockScroll, true);
+    window.removeEventListener('touchmove', blockScroll, true);
+    window.visualViewport?.removeEventListener('resize', onViewportChange);
     host.removeEventListener('cancel', onCancel);
     host.remove();
     imageCanvas.width = imageCanvas.height = 0;
@@ -121,11 +122,21 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
     }
   };
   const abandon = () => stop('abandoned');
+  function onViewportChange() {
+    // Browsers can emit viewport notifications for scrolling or scrollbar
+    // changes without changing the geometry used to sample this fixed image.
+    if (innerWidth !== viewport.width || innerHeight !== viewport.height
+      || (window.visualViewport?.scale ?? 1) !== viewport.scale) abandon();
+  }
   function onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); stop('cancelled'); }
   }
   function onCancel(event: Event) { event.preventDefault(); stop('cancelled'); }
-  const blockScroll = (event: Event) => event.preventDefault();
+  const blockScroll = (event: Event) => {
+    if (!active) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
   root.addEventListener('wheel', blockScroll, { passive: false });
   root.addEventListener('touchmove', blockScroll, { passive: false });
   root.addEventListener('contextmenu', blockScroll);
@@ -133,10 +144,14 @@ export async function installOverlay(dataUrl: string, viewport: { width: number;
   stopButton.addEventListener('click', () => stop('cancelled'));
   host.addEventListener('cancel', onCancel);
   window.addEventListener('keydown', onKeyDown, true);
-  window.addEventListener('resize', abandon);
+  window.addEventListener('resize', onViewportChange);
   window.addEventListener('pagehide', abandon);
-  window.addEventListener('scroll', abandon, true);
-  window.visualViewport?.addEventListener('resize', abandon);
+  // A frozen image keeps its own coordinates even if page code scrolls behind
+  // it. Block user scrolling before it reaches the page, rather than exiting
+  // on scroll events from unrelated/nested elements.
+  window.addEventListener('wheel', blockScroll, { capture: true, passive: false });
+  window.addEventListener('touchmove', blockScroll, { capture: true, passive: false });
+  window.visualViewport?.addEventListener('resize', onViewportChange);
   scope.__colorPickerStop = abandon;
 
   try {

@@ -8,14 +8,14 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off to use the same overlay in single-color mode: one accepted click saves and closes it. A failed save keeps it open for retry.
 3. Enable the checkbox and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
-5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count.
+5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count, with a matching color swatch. The swatch changes only after a successful save.
 6. **Move to next corner** cycles the instruction panel through the corners so it does not permanently hide sample points.
 7. **Esc** or **Stop** removes the overlay and magnifier, restores focus, and returns normal interaction to the source page. After pending saves finish, the popup reopens with the latest color and previous custom mode when the source context is still active. Copy remains explicit; choosing a pixel never writes the clipboard.
 8. To capture new content, exit and start another session. An old overlay is removed before a new capture, so the extension never intentionally samples its own earlier overlay.
 
 ## Frozen view and lifecycle
 
-The overlay displays a screenshot of the visible tab viewport, not a live page or whole-screen feed. Page JavaScript may continue running underneath; only the displayed view is frozen. Wheel and touch scrolling are blocked during selection. Resizing, viewport scaling changes, page scrolling, or pagehide end the overlay to avoid mismatched coordinates. Pinch zoom must be reset before starting.
+The overlay displays a screenshot of the visible tab viewport, not a live page or whole-screen feed. Page JavaScript may continue running underneath; only the displayed view is frozen. Wheel and touch scrolling are blocked at window capture level during selection. Background/nested scroll events do not dismiss the frozen image. Resizing, viewport scaling changes, or pagehide end the overlay to avoid mismatched coordinates. Pinch zoom must be reset before starting.
 
 The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The same magnifier is used by single-color mode and closes only after a successful save in that mode. Native EyeDropper still ends after one color and is available only through the separate Native screen picker button, independent of the switch; there is no silent native fallback. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
 
@@ -42,7 +42,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 
 Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-There are 52 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
+There are 54 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
 Manual checklist:
 
@@ -76,3 +76,6 @@ The worker uses a per-session random ID, source document/tab/window validation, 
 Additional manual checks: finish immediately after starting to test the startup race; test Esc with no selection; test multiple saves followed immediately by Esc; switch tabs during a pending save and ensure no popup appears on the new tab; confirm Advanced is collapsed when the popup returns. Automated lifecycle tests mock action.openPopup and do not prove browser-specific focus behavior.
 
 Reference: [Chrome action.openPopup](https://developer.chrome.com/docs/extensions/reference/api/action#method-openPopup).
+Scroll regression check: wheel over the image, panel, and tab edges; the picker must remain active. A programmatic/nested page scroll must not close it. After Esc/Stop, normal scrolling must work again. Actual viewport resizing still ends the session; resize notifications with unchanged dimensions/scale do not.
+
+A local Chrome headless regression check with trusted wheel input passed over both the image and control panel. It also verified that programmatic page scrolling retains the overlay, the saved-color swatch matches the sampled color, and Esc restores ordinary wheel scrolling. The check used a generated image and mocked color storage; actual extension capture/popup behavior still requires browser verification.

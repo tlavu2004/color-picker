@@ -136,6 +136,9 @@ describe('on-tab frozen picker', () => {
     await installOverlay(imageData, viewport, true);
     expect(document.querySelectorAll('dialog')).toHaveLength(1);
     window.dispatchEvent(new Event('resize'));
+    expect(document.querySelector('dialog')).toBeInTheDocument();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 101 });
+    window.dispatchEvent(new Event('resize'));
     expect(document.querySelector('dialog')).not.toBeInTheDocument();
   });
 
@@ -161,6 +164,39 @@ describe('on-tab frozen picker', () => {
     const wheel = new WheelEvent('wheel', { cancelable: true, bubbles: true });
     roots[0].querySelector('canvas')!.dispatchEvent(wheel);
     expect(wheel.defaultPrevented).toBe(true);
+  });
+
+  it('keeps selection active across wheel, touch and page scroll events, then restores scrolling on exit', async () => {
+    const { roots, api } = setup();
+    const sendMessage = vi.fn(async () => ({ ok: true }));
+    Object.assign(chrome, { runtime: { sendMessage } });
+    const pageWheel = vi.fn();
+    document.addEventListener('wheel', pageWheel);
+    try {
+      await installOverlay(imageData, viewport, true, 'session');
+      const wheel = new WheelEvent('wheel', { bubbles: true, composed: true, cancelable: true, deltaY: 120 });
+      roots[0].querySelector('canvas')!.dispatchEvent(wheel);
+      expect(wheel.defaultPrevented).toBe(true);
+      expect(pageWheel).not.toHaveBeenCalled();
+      const outside = new WheelEvent('wheel', { cancelable: true });
+      window.dispatchEvent(outside);
+      expect(outside.defaultPrevented).toBe(true);
+      const touch = new Event('touchmove', { bubbles: true, composed: true, cancelable: true });
+      roots[0].querySelector('canvas')!.dispatchEvent(touch);
+      expect(touch.defaultPrevented).toBe(true);
+      document.body.dispatchEvent(new Event('scroll', { bubbles: true }));
+      window.dispatchEvent(new Event('scroll'));
+      expect(document.querySelector('dialog')).toBeInTheDocument();
+      expect(sendMessage).not.toHaveBeenCalled();
+      fireEvent.click(roots[0].querySelector('canvas')!, { clientX: 20, clientY: 20 });
+      await waitFor(() => expect(api.colors()).toEqual(['#FF0000']));
+      fireEvent.keyDown(window, { key: 'Escape' });
+      await waitFor(() => expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ reason: 'cancelled' })));
+      const restored = new WheelEvent('wheel', { bubbles: true, cancelable: true });
+      document.dispatchEvent(restored);
+      expect(restored.defaultPrevented).toBe(false);
+      expect(pageWheel).toHaveBeenCalledOnce();
+    } finally { document.removeEventListener('wheel', pageWheel); }
   });
 
   it('times out a stalled decode without leaving listeners or a session', async () => {
@@ -261,6 +297,7 @@ describe('on-tab frozen picker', () => {
     const sendMessage = vi.fn(async () => ({ ok: true }));
     Object.assign(chrome, { runtime: { sendMessage } });
     await installOverlay(imageData, viewport, true, 'session');
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 101 });
     window.dispatchEvent(new Event('resize'));
     await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'PICKER_FINISHED', sessionId: 'session', reason: 'abandoned' }));
   });
