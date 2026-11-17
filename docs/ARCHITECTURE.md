@@ -1,47 +1,44 @@
 # Color Picker architecture
 
-## Stack and entries
+## Stack and entry
 
-Chrome Manifest V3 packages React 19 + TypeScript interfaces, built with Vite 7. Vite is a development/build tool, not the extension runtime. This branch has two trusted extension entries:
+Chrome Manifest V3 packages a React 19 + TypeScript popup, built with Vite 7. Vite is a development/build tool, not an extension runtime. The sole HTML entry is `src/index.html`, mounted by `src/main.tsx`.
 
-- `src/index.html` → `src/main.tsx` → `components/Popup.tsx`.
-- `src/snapshot/index.html` → `snapshot/main.tsx` → `snapshot/SnapshotPicker.tsx`.
-
-There is no content script, background service worker, or broad host access. The manifest requests storage and activeTab. Chrome 112+ is required for the session-storage quota used by screenshot transfer.
+The default picker uses native EyeDropper for one pixel. Continuous mode captures the source tab and injects a self-contained, isolated-world picker on that same tab. There is no background worker or automatically injected content script.
 
 ## Source responsibilities
 
-- `src/components/`: popup coordination and color result UI.
+- `src/components/`: popup coordination, the default-off continuous checkbox, and color-result/copy UI.
 - `src/styles/`: popup CSS.
-- `src/services/pickColor.ts`: native EyeDropper and shared ten-color storage (normalization, legacy migration, save, clear).
-- `src/services/snapshot.ts`: capture source checks, temporary screenshot transfer, session consumption and selection-window creation.
-- `src/snapshot/`: persistent snapshot-selection window, coordinate conversion, and its styles.
-- `tests/`: Vitest service, popup, snapshot, and coordinate tests with mocked browser APIs.
-- `scripts/verify-build.mjs`: verifies the popup, icons, and assets for all built HTML entries.
-- `docs/`: feature status, architecture, snapshot guide, and the future precision investigation backlog.
+- `src/services/pickColor.ts`: native picking and ten-color storage normalization, migration, and saving.
+- `src/services/continuousSelection.ts`: prepare/capture/validate/inject orchestration.
+- `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
+- `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
+- `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
+- `docs/`: architecture, feature status, continuous-mode guide, and deferred precision investigation.
 
-## Native flow
+## Startup and selection
 
-Pick Color calls EyeDropper synchronously within the button interaction. One selected sRGB HEX value is normalized and saved; Esc cancels without changing colors or clipboard. The popup restores the latest stored color and subscribes to local changes. Copy is explicit with a two-second disabled Copied! confirmation. Listeners and timers are cleaned up on unmount.
+The native path opens EyeDropper during the button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
 
-## Continuous snapshot flow
+Continuous startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
 
-The checkbox defaults off. When enabled, capture the active source tab before creating a separate extension window. Transfer the PNG and source identity through a random key in in-memory session storage. The new window consumes/deletes that transfer, draws the image on a canvas at its actual pixel dimensions, and maps displayed click coordinates to captured pixel coordinates.
+The image is decoded without a DOM image URL and drawn on a viewport-sized canvas inside a closed shadow root. A native modal dialog places the overlay above page content and makes underlying controls inert. Constructed styles isolate the picker layout from page CSS. Pointer movement updates a magnifier on animation frames; every click reads that click's captured coordinates directly instead of using a potentially stale preview.
 
-Each completed click uses the shared save operation, retains the session, and updates recent colors. An operation guard prevents overlapping writes. Esc/Stop releases image state and clears the canvas; previously selected colors remain available for explicit copy. Refresh captures only the original source window when its active tab still matches the recorded source tab.
+The magnifier remains open after saving. A promise queue serializes accepted color writes. The panel provides status, error feedback, Stop, and Move controls; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes, source scrolling, and pagehide also stop the session. Accepted writes may finish after visual cleanup.
 
-Snapshot loading intentionally does not use StrictMode's development double effect, because the transfer is single-use. Async image callbacks and session state updates are guarded against unmount/stop.
+## Storage and permissions
 
-## Storage and lifecycle
+`chrome.storage.local.colors` contains the newest ten distinct uppercase HEX values. Legacy history is normalized and trimmed. The injected storage path cannot import module helpers, so its matching ten-color policy is enclosed and tested separately. Screenshots are never written to local or session storage and are never uploaded.
 
-`chrome.storage.local.colors` contains at most ten distinct uppercase HEX values, newest first. Reading the history service normalizes legacy entries and trims old 50-color history. Native and snapshot selection share the same save function. Images are never placed in local color history.
+The manifest requests storage, activeTab, and scripting. Script injection is explicit, top-frame-only, and user initiated; broad website host access is not requested. Browser-restricted pages may reject injection even when capture is possible; the UI reports failure and native single-pick remains the alternative.
 
-A `color-picker-snapshot:<uuid>` entry in `storage.session` contains a PNG, source IDs/title, and capture time. It is removed on successful load, removed when window creation fails, rejected after five minutes, and pruned on later capture. No background expiry job or server upload is used. Very large PNGs may exceed session quota and produce a visible error.
+The view is frozen, not the underlying application's execution. It does not track page updates, animations, scrolling, other apps, or browser chrome. Stop and restart to capture fresh content. Closed shadow DOM reduces ordinary host-page access to the screenshot canvas but is not a general browser security boundary.
 
-## Build and tests
+## Build and verification
 
-Run `npm run build` to typecheck and build both entries into `dist/`; install `dist/` with Load unpacked. Run `npm run verify:build` to verify entry assets. Vite dev pages alone do not provide extension storage/capture permissions.
+Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so the new scripting permission and popup code are applied. The old snapshot HTML/window entry and session transfer are removed.
 
-Vitest and React Testing Library use jsdom and mocked APIs. Run `npm run test:typecheck`, `npm run lint`, `npm test`, and `npm run test:coverage`. Coverage excludes only the two mounting entries; there is no percentage gate. Native picking and real tab capture still require manual browser verification.
+Run lint, test typechecking, Vitest, coverage, and `verify:build`. Coverage includes the popup, services, and injected module and excludes only the mounting entry. Tests include serialization of injected functions and DOM cleanup, but capture/injection/top-layer behavior still needs a real Chrome check.
 
-See [continuous selection](CONTINUOUS_SELECTION.md) for behavior, permissions, limitations, and checks. [Feature status](FEATURES.md) distinguishes independent PRs. [Precision investigation](BACKLOG.md) remains future work.
+See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for branch scope, and the [backlog](BACKLOG.md) for deferred advanced precision work.

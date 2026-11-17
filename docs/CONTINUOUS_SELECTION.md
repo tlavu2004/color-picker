@@ -1,57 +1,61 @@
-# Continuous selection from a tab snapshot
+# Continuous selection on the source tab
 
-Implemented on `feat/continuous-selection`, created directly from main `a069d30`. Precision magnification, a pixel grid, and keyboard pixel stepping remain out of scope, as requested.
+Implemented on `feat/continuous-selection`. This replaces the earlier separate snapshot window with an on-tab frozen-image overlay and persistent magnifier, following the updated interaction design.
 
 ## Use
 
-1. Load the built `dist/` extension in desktop Chrome/Edge 112 or later.
-2. Open the popup on the source tab. The **Continuous selection from tab snapshot** checkbox defaults to off; native Pick Color remains available when it is off.
-3. Enable it and click **Capture tab and pick**.
-4. A separate extension window opens with a frozen image of the visible source tab. Click multiple pixels; every completed selection saves the color without closing the session.
-5. Use the recent-color buttons to view a saved HEX. Click **Copy** explicitly to copy it; success disables the button with Copied! for two seconds.
-6. **Refresh snapshot** captures the original source window again, provided its active tab is still the original source tab. It never silently switches the capture target to another tab.
-7. **Esc** or **Stop** ends selection and releases the image from the view. Saved colors remain available for explicit copy. **Close window** closes the view. Start a new session from the popup to pick again.
+1. Load the rebuilt `dist/` extension and reload it after upgrading. The added scripting permission may require acknowledging the browser's extension permission prompt.
+2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off for the original single-pick native EyeDropper.
+3. Enable the checkbox and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
+4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
+5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count.
+6. **Move controls** cycles the instruction panel through the corners so it does not permanently hide sample points.
+7. **Esc** or **Stop** removes the overlay and magnifier, restores focus, and returns normal interaction to the source page. Open the popup to view/copy saved colors. Copy remains explicit; choosing a pixel never writes the clipboard.
+8. To capture new content, exit and start another session. An old overlay is removed before a new capture, so the extension never intentionally samples its own earlier overlay.
 
-This is not a live screen picker. It covers only the visible tab viewport at capture time, not browser chrome, other apps, offscreen page content, later scrolling, or animation. Captured pixels are mapped from the displayed image's bounds to its actual image dimensions; this is not a claim to fix native pointer/DPI behavior.
+## Frozen view and lifecycle
 
-## Data and permissions
+The overlay displays a screenshot of the visible tab viewport, not a live page or whole-screen feed. Page JavaScript may continue running underneath; only the displayed view is frozen. Wheel and touch scrolling are blocked during selection. Resizing, viewport scaling changes, page scrolling, or pagehide end the overlay to avoid mismatched coordinates. Pinch zoom must be reset before starting.
 
-- Adds temporary **activeTab** permission for tab capture; retains **storage**. No broad host access, content script, service worker, or tabCapture stream is added.
-- Screenshot PNG data is transferred through `chrome.storage.session` with a random session ID, not through local storage or a URL payload. It is consumed and removed when the view loads.
-- Unconsumed transfers expire logically after five minutes and are pruned on the next capture; session storage is also cleared by browser/extension lifecycle. There is no background expiry timer.
-- Refreshing the selection window itself after consumption cannot replay the transfer: start a new session from the popup. Refresh snapshot inside the loaded view is the supported refresh action.
-- Source identity and capture time are displayed. Stopping clears the screenshot canvas and image state. Colors alone remain in local storage; nothing is sent to a server.
-- Very large images can exceed the session-storage quota. Capture, permission, source-tab, quota, image-decoding, and storage failures are reported rather than opening an unusable view silently.
-- Recent color storage is normalized/deduplicated to the newest **10** colors, shared by native and snapshot saves. Old 50-entry history is trimmed when the history service reads it. The dedicated popup history grid remains on the separate history branch.
+The magnifier is custom canvas rendering with smoothing disabled and a marked center pixel. It remains visible after clicks. The native EyeDropper API still ends after one color and is used only by the default single-pick path. Dedicated keyboard pixel stepping, configurable zoom, and a full precision grid remain future work.
 
-See [Chrome tab capture](https://developer.chrome.com/docs/extensions/reference/api/tabs#method-captureVisibleTab) and [session storage](https://developer.chrome.com/docs/extensions/reference/api/storage/). Chrome limits visible-tab captures to two per second; overly rapid Refresh clicks can report a browser capture-limit error while retaining the previous image.
+The modal overlay makes the underlying page inert during selection. Its own canvas click handlers prevent normal click actions; clicking a source-page link through the overlay must not navigate. Esc/Stop removes the modal entirely, rather than leaving a blank capture window. Already accepted save requests can finish after exit; no further pixels are accepted after stopping.
 
-## Implementation
+## Permissions, data, and page isolation
 
-- `src/services/snapshot.ts`: capture source selection, temporary session transfer, consumption, expiry checks, and window creation.
-- `src/snapshot/SnapshotPicker.tsx`: image loading, repeated selection, explicit copy, refresh, and session stop.
-- `src/snapshot/pixels.ts`: displayed-coordinate to captured-pixel mapping and HEX conversion.
-- `src/services/pickColor.ts`: common ten-color storage policy for native and snapshot selection.
-- Vite builds both `src/index.html` and `src/snapshot/index.html`. No background worker is needed.
+- Uses **activeTab** and **scripting** only for a user-started session on the selected source tab; retains **storage** for colors. No broad host permission, automatic content script, or background worker is added.
+- Restricted browser pages, extension stores, and other pages that prohibit script injection cannot use this overlay. Use the native picker there. Injection/capture errors are reported in the popup.
+- The captured PNG is passed directly to an isolated-world injected function, decoded as an ImageBitmap, and drawn in a closed shadow tree. It is not placed in local/session storage, a page-visible image URL, or a separate window.
+- The closed shadow tree prevents ordinary page DOM code from directly querying the screenshot canvas. It is not presented as a general security boundary against the browser or developer tools.
+- Constructed style sheets and bitmap decoding avoid relying on page inline-style or image-source policies. The screenshot is released when the overlay is removed; nothing is uploaded.
+- All global listeners, loading timers, scheduled preview frames, and the active-session callback are removed on exit. Restarting does not stack overlays.
+- Native and overlay selection retain the newest **10** normalized distinct HEX colors in `chrome.storage.local.colors`. Rapid clicks are serialized to avoid lost updates within a session. Persistence errors are shown and the next click can retry.
 
-Native EyeDropper cannot provide a guaranteed automatic multi-select loop: each open requires activation, and Chromium consumes it. This feature deliberately uses an explicit snapshot mode instead. References: [specification](https://wicg.github.io/eyedropper-api/) and [Chromium implementation](https://raw.githubusercontent.com/chromium/chromium/main/content/browser/eye_dropper_chooser_impl.cc).
+## Code
+
+- `src/services/continuousSelection.ts`: source checks, removal of a prior overlay, capture, active-tab validation, and explicit injection.
+- `src/content/overlay.ts`: self-contained injected functions, modal/shadow UI, magnifier, pixel mapping, queued persistence, and cleanup. All runtime helpers stay inside the injected function because Chrome serializes it without module imports.
+- `src/services/pickColor.ts`: native picking and the matching ten-color history policy. Keep both storage paths aligned when changing the policy.
+- Vite builds only the popup entry again. The old `src/snapshot/` window and session-transfer code have been removed.
 
 ## Verification
 
-Use `npm ci`, `npm run build`, `npm run verify:build`, `npm run lint`, `npm run test:typecheck`, `npm test`, and optionally `npm run test:coverage`.
+Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-The 29 automated tests cover the native service, popup/clipboard behavior, capture/session lifecycle, scaling and edge mapping, three successive colors without automatic copy, cancellation, refresh, legacy ten-color migration, quota errors, and storage failure recovery. Tests use mocked capture/canvas/browser APIs. They do not prove OS-level capture permissions or a real browser's screenshot/color pipeline.
+There are 31 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier, three successive pixel saves, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
-Manual browser checklist:
+Manual checklist:
 
-- Verify toggle-off native selection still works and does not capture.
-- Enable the toggle on a normal HTTPS page, then select three colors in the snapshot window.
-- Compare selected HEX with known flat-color blocks in the source page.
-- Verify Copy/Copied!, Esc/Stop, and retained saved colors.
-- Change the source page content and Refresh snapshot; then change its active tab and verify refresh refuses the different target.
-- Repeat with display scaling and a resized snapshot window to check coordinate mapping.
-- Close/reopen and test capture failure or a closed source window.
+- Verify native single-pick still works with the checkbox off.
+- On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
+- Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
+- Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.
+- Use Move controls and sample the area formerly under the panel. Clicking the panel must not save a pixel.
+- Try a link/button underneath the screenshot; it must only select a color, not activate the source control.
+- Press Esc and separately test Stop. The image and magnifier must disappear and normal page clicks/scrolling must return.
+- Start again and confirm there is only one overlay, without old UI in the captured pixels.
+- Reopen the popup and copy a saved color explicitly. Restricted-page errors must leave the popup usable.
 
-## Independent branch integration
+## Integration
 
-The branch starts from main and includes the test tooling it needs; it does not merge other feature or CI branches. When integrating all PRs, retain the history branch's popup grid and ten-color normalization, the localization branch's language setting, and the CI workflows. Translate the snapshot window's English labels through the localization dictionaries during integration. Preserve `saveColor`, both Vite entries, and the snapshot resource verification. The product language and native history UI on this standalone branch remain the main baseline apart from the snapshot feature.
+This branch still needs the normal update from the latest main before its PR is merged. Preserve the history branch's popup grid and the CI branch's verification workflow when resolving conflicts. Localization is implemented on another branch; overlay/popup labels here are English until that integration. Precision work beyond this basic magnifier remains deferred.
