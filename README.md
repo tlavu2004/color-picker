@@ -2,9 +2,13 @@
 
 A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use the same magnifier on a frozen tab view for single or continuous selection. A separate native screen picker remains available as an explicit alternative.
 
+## Localization
+
+Choose Auto / English / Tiếng Việt in the popup. Auto follows the browser language with English fallback. The preference is saved locally. See [localization](docs/LOCALIZATION.md).
+
 ## Current features
 
-Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. Localization awaits integration from its separate branch.
+Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. English and Vietnamese are supported, with Auto following the browser language. The product name Color Picker stays unchanged.
 
 ## Run locally
 
@@ -65,6 +69,10 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 
 ## Documentation
 
+- [Localization behavior and verification](docs/LOCALIZATION.md)
+- [Architecture and source layout](docs/ARCHITECTURE.md)
+- [Existing features and planned work](docs/FEATURES.md)
+- [Precision selection investigation backlog](docs/BACKLOG.md)
 - [Continuous selection behavior and browser checklist](docs/CONTINUOUS_SELECTION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Feature status](docs/FEATURES.md)

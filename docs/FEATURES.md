@@ -14,9 +14,9 @@
 
 Screenshots remain transient and are never uploaded or saved in extension storage. The custom picker requires storage, activeTab, and scripting permissions; it is explicitly started and has no automatic content script or broad host permissions.
 
-## Separate implementation awaiting integration
+## Localization
 
-Localization is implemented on `feat/localization` and has not been integrated here. English/Vietnamese labels, Auto language fallback, and persisted preferences must be reconciled with the new history and custom picker UI when that branch is integrated.
+English and Vietnamese are integrated across the popup, history, and custom picker. Auto follows the browser language with English fallback; preferences are persisted locally. The product name Color Picker stays unchanged. Browser-native dialogs follow browser settings. See [localization](LOCALIZATION.md).
 
 ## Future work, not scheduled for immediate implementation
 

@@ -59,7 +59,7 @@ Manual checklist:
 
 ## Integration
 
-This integration includes the ten-color history grid and shared CI/coverage workflows from main. Localization is implemented on another branch; overlay/popup labels here are English until that integration. Precision work beyond this basic magnifier remains deferred.
+This integration includes the ten-color history grid and shared CI/coverage workflows from main. Popup and overlay labels follow the English/Vietnamese preference; the overlay receives its translations when the session starts. Precision work beyond this basic magnifier remains deferred.
 
 ## Reload troubleshooting
 

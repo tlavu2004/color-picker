@@ -55,3 +55,6 @@ Chrome/Edge 127+ is required for action.openPopup. The action popup closes after
 Session metadata and the last custom mode are stored in in-memory storage.session, not screenshots. The worker validates extension, tab, frame, document ID, and random session ID; it consumes each completion once. It rechecks the source tab URL, active tab, and focused window before opening the popup. Navigation, tab closure/activation away, superseding sessions, viewport cleanup, and expired sessions do not request a popup in another context. Metadata allows normal worker restarts without losing a pending return.
 
 If Chrome refuses popup opening, saved colors remain intact and a dot badge allows a manual icon click. Opening the popup clears the badge. Native mode keeps the existing popup visible and is isolated in the collapsed Advanced section with an explanation of that limitation.
+## Localization
+
+The language hook resolves Auto/English/Vietnamese and persists the preference separately from colors. Popup/history components receive translated labels. Tab selection passes a plain dictionary into the serialized overlay; no external runtime imports are required there. Color Picker remains the product name in every locale. See [localization](LOCALIZATION.md).
