@@ -28,6 +28,8 @@ The image is decoded without a DOM image URL and drawn on a viewport-sized canva
 
 Continuous mode keeps the magnifier open after saving; a promise queue serializes its accepted writes. Single mode accepts only one click while saving and removes the overlay after success. A failed save unlocks single mode for retry without closing it. The panel provides status, error feedback, Stop, and Move to next corner; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes and pagehide also stop the session. Non-passive window capture listeners block wheel/touch gestures and are removed on exit; background/nested scroll events do not end a frozen-view session. Accepted writes may finish after visual cleanup.
 
+The recent-color grid shows up to ten colors. Selecting a swatch changes the visible result without copying or reordering history. Clear history persists an empty list. Loading and pending operations disable conflicting popup actions.
+
 ## Storage and permissions
 
 `chrome.storage.local.colors` contains the newest ten distinct uppercase HEX values. Legacy history is normalized and trimmed. The injected storage path cannot import module helpers, so its matching ten-color policy is enclosed and tested separately. Screenshots are never written to local or session storage and are never uploaded.
@@ -43,6 +45,8 @@ Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so the ne
 Run lint, test typechecking, Vitest, coverage, and `verify:build`. Coverage includes the popup, services, and injected module and excludes only the mounting entry. Tests include serialization of injected functions and DOM cleanup, but capture/injection/top-layer behavior still needs a real Chrome check.
 
 See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for branch scope, and the [backlog](BACKLOG.md) for deferred advanced precision work.
+
+`npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI and release reuse `.github/workflows/verify.yml` on Node.js 24, selected through `.node-version`. Coverage is summarized in Actions. The verification job uploads a ZIP and SHA-256 checksum; the release job downloads and publishes that verified archive without rebuilding. See [testing and delivery](TESTING.md) for details and manual verification.
 
 ## Popup restoration
 

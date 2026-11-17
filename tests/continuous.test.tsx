@@ -58,6 +58,7 @@ describe('continuous overlay startup', () => {
     const close = vi.spyOn(window, 'close').mockImplementation(() => {});
     render(<Popup />);
     const toggle = screen.getByRole('switch', { name: 'Continuous selection' });
+    await waitFor(() => expect(toggle).toBeEnabled());
     expect(toggle).not.toBeChecked();
     expect(screen.getByRole('button', { name: 'Pick Color' })).toBeInTheDocument();
     fireEvent.click(toggle);
@@ -73,6 +74,7 @@ describe('continuous overlay startup', () => {
     const close = vi.spyOn(window, 'close').mockImplementation(() => {});
     render(<Popup />);
     expect(screen.getByRole('button', { name: 'Native screen picker' }).closest('details')).not.toHaveAttribute('open');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Pick Color' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Pick Color' }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(api.execute.mock.calls[1][0].args[2]).toBe(false);
@@ -98,6 +100,7 @@ describe('continuous overlay startup', () => {
     Object.assign(chrome.storage, { session: { get: vi.fn(() => saved.promise) } });
     render(<Popup />);
     const toggle = screen.getByRole('switch', { name: 'Continuous selection' });
+    await waitFor(() => expect(toggle).toBeEnabled());
     fireEvent.click(toggle);
     fireEvent.click(toggle);
     await act(async () => { saved.resolve({ pickerPopupMode: true }); });
@@ -112,6 +115,7 @@ describe('continuous overlay startup', () => {
     expect(api.capture).not.toHaveBeenCalled();
     const close = vi.spyOn(window, 'close').mockImplementation(() => {});
     render(<Popup />);
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Continuous selection' })).toBeEnabled());
     fireEvent.click(screen.getByRole('switch', { name: 'Continuous selection' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start continuous selection' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('scripting permission');

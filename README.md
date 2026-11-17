@@ -2,9 +2,13 @@
 
 A Chrome Manifest V3 extension built with React 19, TypeScript, and Vite 7. Use the same magnifier on a frozen tab view for single or continuous selection. A separate native screen picker remains available as an explicit alternative.
 
+## Current features
+
+Retain up to ten distinct colors, newest first. The history grid lets you view previous colors without copying; Clear history removes them. Legacy histories are trimmed to ten. Copy is explicit and shows a disabled Copied! button for two seconds after success. Localization awaits integration from its separate branch.
+
 ## Run locally
 
-Use desktop Chrome/Edge 127+ and Node.js 22.22.2+ or 24.15.0+ on this standalone branch.
+Use desktop Chrome/Edge 127+ and Node.js 24.15.0+ (24.x), matching `.node-version` and CI.
 
 ```powershell
 npm ci
@@ -26,11 +30,21 @@ Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Lo
 
 The displayed tab image is frozen; page code can continue running beneath it. Scrolling is blocked during selection. Resize, viewport changes, or navigation end the overlay. Stop and start again to capture new content. Advanced grid/keyboard precision controls remain deferred.
 
+## Development commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start Vite; open `/src/index.html` on the URL printed in the terminal for layout work |
+| `npm run build` | Check TypeScript and build the unpacked extension into `dist/` |
+| `npm run preview` | Serve the production build for layout inspection at `/src/index.html` |
+| `npm run lint` | Lint TypeScript and TSX source |
+| `npm test` | Run Vitest service and popup tests |
+
 ## Permissions and data
 
 Requests **storage**, **activeTab**, and **scripting** for user-started capture/injection. No automatic content script, broad website access, account, or server upload is used. A small module service worker restores the popup for completed/cancelled custom sessions. The screenshot stays in the isolated picker and is not written to local/session storage. Ordinary HTTP/HTTPS pages support the overlay subject to browser injection restrictions; use native picking on restricted pages.
 
-## Checks
+## Verification
 
 ```powershell
 npm run lint
@@ -41,9 +55,13 @@ npm run build
 npm run verify:build
 ```
 
-The 54 mocked tests cover the native service, popup/clipboard, overlay startup/serialization, magnifier, repeated selection, save errors, cleanup, and coordinate mapping. Real tab capture, top-layer interaction, and page CSS/CSP behavior still require browser checks. See the continuous-selection guide for a checklist.
+Vitest and React Testing Library cover history, native selection, popup/clipboard, overlay startup, magnification, queued saves, cleanup, and popup restoration with mocked browser APIs. Real capture, permissions, focus, and page interaction require browser verification. See [testing and delivery](docs/TESTING.md) and the [continuous-selection checklist](docs/CONTINUOUS_SELECTION.md).
 
-`npm run dev` and `npm run preview` serve `/src/index.html` for layout work only; a loaded extension is required for capture and scripting. Before merging, update this branch from the latest main and preserve its history UI and CI setup.
+`npm run dev` and `npm run preview` serve `/src/index.html` for layout work; use the built extension for browser APIs.
+
+## CI and delivery
+
+GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, using a shared verify workflow. Feature branch pushes do not duplicate PR checks; use manual dispatch when needed. Coverage is shown in the job summary and uploaded with a verified extension ZIP and SHA-256 checksum. Pushing a matching version tag publishes that same verified archive to a GitHub release, without rebuilding; no Web Store deployment is configured. See [testing and delivery](docs/TESTING.md) before creating a release tag.
 
 ## Documentation
 
@@ -53,3 +71,5 @@ The 54 mocked tests cover the native service, popup/clipboard, overlay startup/s
 - [Deferred advanced precision investigation](docs/BACKLOG.md)
 
 During selection, wheel/touch gestures are blocked and do not end the frozen-view session. Background page scroll events do not dismiss it. The last successfully saved color is shown as a swatch beside its HEX; failed saves retain the last successful swatch.
+
+- [Testing, coverage, and delivery](docs/TESTING.md)

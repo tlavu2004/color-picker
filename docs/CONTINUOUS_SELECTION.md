@@ -6,7 +6,7 @@ Implemented on `feat/continuous-selection`. This replaces the earlier separate s
 
 1. Load the rebuilt `dist/` extension and reload it after upgrading. The added scripting permission may require acknowledging the browser's extension permission prompt.
 2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off to use the same overlay in single-color mode: one accepted click saves and closes it. A failed save keeps it open for retry.
-3. Enable the checkbox and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
+3. Enable the switch and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
 5. Click several pixels. Each accepted click saves one color and keeps the overlay and magnifier open. The status reports the last successfully saved HEX and history count, with a matching color swatch. The swatch changes only after a successful save.
 6. **Move to next corner** cycles the instruction panel through the corners so it does not permanently hide sample points.
@@ -36,13 +36,13 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 - `src/services/tabSelection.ts`: source checks, removal of a prior overlay, capture, active-tab validation, and explicit injection.
 - `src/content/overlay.ts`: self-contained injected functions, modal/shadow UI, magnifier, pixel mapping, queued persistence, and cleanup. All runtime helpers stay inside the injected function because Chrome serializes it without module imports.
 - `src/services/pickColor.ts`: native picking and the matching ten-color history policy. Keep both storage paths aligned when changing the policy.
-- Vite builds only the popup entry again. The old `src/snapshot/` window and session-transfer code have been removed.
+- Vite builds the popup and module background service worker. The old `src/snapshot/` window and session-transfer code have been removed.
 
 ## Verification
 
 Run `npm run lint`, `npm run test:typecheck`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run verify:build`.
 
-There are 54 mocked tests for native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
+Mocked tests cover native selection, popup/clipboard behavior, capture ordering, restricted/changed source handling, persistent magnifier, three rapid selections, ten-color storage, save retries, Esc/Stop, focus restoration, restart, viewport changes, control movement, scroll blocking, decoding timeout, and self-contained function serialization. A separate local Chrome headless smoke check also passed bitmap decoding and constructed styles under restrictive CSP, a modal closed-shadow magnifier shared by both modes, three successive pixel saves, single-mode exit after one save, Esc cleanup, and focus restoration. That check used generated image data and mocked storage, so actual extension capture/injection permissions and real websites still need the manual check below.
 
 Manual checklist:
 
@@ -59,7 +59,7 @@ Manual checklist:
 
 ## Integration
 
-This branch still needs the normal update from the latest main before its PR is merged. Preserve the history branch's popup grid and the CI branch's verification workflow when resolving conflicts. Localization is implemented on another branch; overlay/popup labels here are English until that integration. Precision work beyond this basic magnifier remains deferred.
+This integration includes the ten-color history grid and shared CI/coverage workflows from main. Localization is implemented on another branch; overlay/popup labels here are English until that integration. Precision work beyond this basic magnifier remains deferred.
 
 ## Reload troubleshooting
 
