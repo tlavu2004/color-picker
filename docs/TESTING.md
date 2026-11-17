@@ -78,8 +78,8 @@ The custom picker and worker tests cover capture/injection ordering, single and 
 4. Confirm `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Confirm the intended release commit is checked out and that `v1.0.0` does not already exist remotely. Never move an existing published version tag to another commit.
 5. Create and verify the signed tag, then push only that tag:
 
-   ```powershell
-   git tag -s v1.0.0 -m "Color Picker 1.0.0"
+   ```bash
+   git tag -s v1.0.0 -m "Color Picker v1.0.0"
    git tag -v v1.0.0
    git push origin v1.0.0
    ```
