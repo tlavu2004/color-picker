@@ -30,11 +30,11 @@ Acceptance criteria for a future precision mode:
 
 Reference: https://wicg.github.io/eyedropper-api/
 
-## Review Node version configuration in a separate PR
+## Node version configuration — resolved
 
-Consider removing `.node-version` and configuring Node 24 directly in GitHub Actions. Keep the current file until that PR; workflows currently read it through `node-version-file`.
+Decision: retain `.node-version` as the shared Node major-version configuration for local version managers, CI, and release verification.
 
-- Find and update every workflow reference before deleting the file.
-- Keep the chosen Node version consistent with `package.json` engines and the setup/testing documentation.
-- Document the effect on local version managers, then validate the shared CI and release verification configuration.
-- This is deferred configuration cleanup, not part of the continuous-selection feature.
+- CI and release workflows already use `node-version-file: .node-version`, avoiding repeated version declarations.
+- The file selects Node 24; `package.json` engines requires 24.15.0+ within that major version. These serve complementary purposes: selecting the toolchain and declaring its supported range.
+- When upgrading Node, update this file, package engines, and setup/testing documentation together, then validate the shared verification workflow.
+- No removal PR is planned. This review is complete; Node is build/test tooling and is not required by users installing the release ZIP.
