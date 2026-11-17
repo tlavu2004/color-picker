@@ -51,9 +51,9 @@ jobs:
           NODE
       - name: Package verified extension
         working-directory: dist
-        run: zip -r ../color-picker-extension.zip .
+        run: zip -r ../color-picker.zip .
       - name: Record archive checksum
-        run: sha256sum color-picker-extension.zip > color-picker-extension.zip.sha256
+        run: sha256sum color-picker.zip > color-picker.zip.sha256
       - name: Upload coverage reports
         if: ${{ !cancelled() && steps.tests.outcome != 'skipped' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -65,9 +65,9 @@ jobs:
       - name: Upload verified package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: color-picker-extension
+          name: color-picker
           path: |
-            color-picker-extension.zip
-            color-picker-extension.zip.sha256
+            color-picker.zip
+            color-picker.zip.sha256
           if-no-files-found: error
           retention-days: 14
