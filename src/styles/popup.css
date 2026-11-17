@@ -108,9 +108,22 @@ button:disabled {
 .native-picker-button {
   display: block;
   margin: 8px auto 0;
-  background: #eef2f8;
-  color: #24344d;
+  background: #edf5ff;
+  color: #0758ac;
+  border: 1px solid #1673d1;
   font-size: 12px;
+}
+
+.native-picker-button:not(:disabled):hover {
+  background: #dbeafe;
+}
+
+.native-picker-button:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #d1d5db;
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .advanced-options {
