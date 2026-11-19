@@ -64,17 +64,25 @@ The custom picker and worker tests cover capture/injection ordering, single and 
 
 ## Publish version 1.0.0
 
-1. Review and merge the release-preparation PR into `main`. Wait for CI on that main commit to pass.
+1. Review and merge the documentation PR into `main`. Wait for CI on that exact main commit to pass. The earlier v1.0.0 release and local/remote tags were removed before this review; publication must use the newly reviewed main commit, not the earlier commit.
 2. Download the verified CI package, extract it, and load it unpacked. Check English/Vietnamese/Auto, single and continuous selection, Esc/Stop and popup return, ten-color history, and explicit copying. Browser-native dialogs follow the browser language.
 3. Update the local main with a clean working tree:
 
    ```powershell
    git switch main
    git pull --ff-only origin main
+   git rev-parse HEAD origin/main
    ```
 
-4. Confirm `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Confirm the intended release commit is checked out and check whether `v1.0.0` exists locally or remotely. If it exists, stop before tagging: deleting a GitHub Release does not delete its Git tag. An existing tag still points to its original commit. Do not delete or move it as part of documentation review; agree on the version/tag strategy before republishing.
-5. For a version whose tag does not already exist, create and verify the signed tag, then push only that tag:
+4. Confirm both hashes above match the reviewed, CI-verified main commit. Check that `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Verify the tag is still absent locally and remotely:
+
+   ```bash
+   git tag --list v1.0.0
+   git ls-remote --tags origin refs/tags/v1.0.0
+   ```
+
+   Both commands should produce no tag entries. If either finds an existing tag, stop and investigate instead of force-pushing it. Deleting a GitHub Release alone does not delete its tag.
+5. From the verified `main` commit, create and verify the new signed tag, then push only that tag:
 
    ```bash
    git tag -s v1.0.0 -m "Color Picker v1.0.0"

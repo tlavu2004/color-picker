@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes are recorded here. Version 1.0.0 is under documentation review before republishing. Its GitHub Release has been removed; the signed tag remains on the earlier commit until a separate release decision. No publication date is assigned here.
+Notable changes are recorded here. Version 1.0.0 is prepared for publication after documentation review. The earlier GitHub Release and its local/remote tags were removed before this review. A new signed tag will be created on the reviewed `main` commit after merge and successful CI; its GitHub Release will establish the publication date.
 
 ## 1.0.0
 
