@@ -1,6 +1,6 @@
 # Privacy
 
-Applies to Color Picker version 1.0.0. Last updated: November 17, 2026.
+Applies to Color Picker version 1.0.0. Last reviewed: November 19, 2026.
 
 ## Processing on your device
 

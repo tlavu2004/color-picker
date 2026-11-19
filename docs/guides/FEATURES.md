@@ -9,6 +9,7 @@
 - **Feedback:** display the selected color and HEX in the popup; the overlay shows the last successfully saved swatch, HEX, history count, and persistence errors.
 - **Explicit copy:** only Copy changes the clipboard. Copied! disables the button for two seconds after success.
 - **Lifecycle:** Esc/Stop removes the custom picker and restores page interaction. The popup returns after queued saves settle when the source tab/window remains active. The worker validates session/document identity; a badge supports manual reopening if the browser refuses automatic return.
+- **Pixel consistency:** clicking uses one sample for the preview and save, preserving fractional pointer coordinates at color/text boundaries.
 - **Controls:** move instructions between four corners. Wheel/touch scrolling is blocked during selection; actual viewport changes end the frozen session.
 - **Testing and delivery:** Vitest, React Testing Library, source coverage, Node 24 GitHub Actions, verified ZIP/checksum packaging, and tag-triggered GitHub releases. Coverage is informational; Web Store deployment is not configured.
 
