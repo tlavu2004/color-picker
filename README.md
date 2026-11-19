@@ -69,7 +69,7 @@ npm run build
 npm run verify:build
 ```
 
-Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Load unpacked this project's `dist/` directory. After editing, rebuild and Reload the extension. This update adds scripting permission; acknowledge a browser permission prompt if shown. Close any old snapshot window from the previous implementation.
+Open `chrome://extensions` or `edge://extensions`, enable Developer mode, and Load unpacked this project's `dist/` directory. After editing, rebuild and Reload the extension. Acknowledge browser permission prompts if shown.
 
 ## Pick colors
 
@@ -89,7 +89,7 @@ The displayed tab image is frozen; page code can continue running beneath it. Sc
 
 ### Native screen picker
 
-Expand **Advanced** and click **Native screen picker** to use the browser's one-color EyeDropper. Turn off Continuous selection first; the native button is disabled while it is enabled. Its magnifier is controlled by the browser, and the popup stays visible while selecting.
+Expand **Advanced** and click **Native screen picker** to use the browser's one-color EyeDropper. Turn off **Continuous selection** first; enabling that mode disables the native button. Its magnifier is controlled by the browser, and the popup stays visible while selecting.
 
 ![Native EyeDropper with the browser magnifier active](docs/images/native-picker.png)
 
@@ -136,7 +136,7 @@ Vite builds the extension; installed users do not need a Vite server or Node.js.
 
 ## Permissions and data
 
-Requests **storage**, **activeTab**, and **scripting** for user-started capture/injection. No automatic content script, broad website access, account, or server upload is used. A small module service worker restores the popup for completed/cancelled custom sessions. The screenshot stays in the isolated picker and is not written to local/session storage. Ordinary HTTP/HTTPS pages support the overlay subject to browser injection restrictions; use native picking on restricted pages.
+Requests **storage**, **activeTab**, and **scripting** for user-started capture/injection. No automatic content script, broad website access, account, or server upload is used. A small module service worker restores the popup for completed/cancelled custom sessions. The screenshot stays in the isolated picker and is not written to local/session storage. Ordinary HTTP/HTTPS pages support the overlay subject to browser injection restrictions; turn off continuous selection and use the native picker on restricted pages.
 
 ## Troubleshooting
 
@@ -144,7 +144,7 @@ Requests **storage**, **activeTab**, and **scripting** for user-started capture/
 | --- | --- |
 | Load unpacked cannot find the manifest | Extract the extension ZIP and select the folder directly containing `manifest.json`. For a source build, select `dist/`. |
 | The popup says scripting permission is unavailable | Reload the extension on `chrome://extensions` or `edge://extensions`, acknowledge new permissions if prompted, then close and reopen the popup. Reloading only the website does not apply manifest changes. |
-| Custom picking fails on a restricted page | Use an ordinary HTTP/HTTPS page or explicitly choose Advanced → Native screen picker. Browser restrictions can prevent injection. |
+| Custom picking fails on a restricted page | Use an ordinary HTTP/HTTPS page or turn off continuous selection and choose Advanced → Native screen picker. Browser restrictions can prevent injection. |
 | The overlay ends after resizing or zooming | This protects coordinate mapping. Finish changing the viewport, reset pinch zoom, and start a new capture. |
 | The captured page looks out of date | Custom selection uses a frozen screenshot. Stop and start again to capture the current visible page. |
 | The popup does not reopen | Keep the source tab active and its window focused. Navigation or viewport cleanup cancels automatic return. If the browser refuses opening, click the extension icon; a dot badge may indicate saved results. |

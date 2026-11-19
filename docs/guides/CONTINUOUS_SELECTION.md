@@ -1,10 +1,10 @@
 # Continuous selection on the source tab
 
-Implemented on `feat/continuous-selection`. This replaces the earlier separate snapshot window with an on-tab frozen-image overlay and persistent magnifier, following the updated interaction design.
+Single and continuous selection share an on-tab frozen-image overlay and persistent pixel magnifier. No separate capture window is opened.
 
 ## Use
 
-1. Load the rebuilt `dist/` extension and reload it after upgrading. The added scripting permission may require acknowledging the browser's extension permission prompt.
+1. Load the rebuilt `dist/` extension and reload it after upgrading. Acknowledge browser permission prompts when shown.
 2. On an ordinary HTTP/HTTPS page, open the popup. Leave **Continuous selection** off to use the same overlay in single-color mode: one accepted click saves and closes it. A failed save keeps it open for retry.
 3. Enable the switch and click **Start continuous selection**. The popup closes after the overlay is ready; no capture window opens.
 4. Move the mouse to inspect enlarged pixels and their HEX value. The highlighted center pixel is the one selected by a click.
@@ -24,7 +24,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 ## Permissions, data, and page isolation
 
 - Uses **activeTab** and **scripting** only for a user-started session on the selected source tab; retains **storage** for colors. No broad host permission or automatic content script is added. A module service worker manages popup restoration.
-- Restricted browser pages, extension stores, and other pages that prohibit script injection cannot use this overlay. Use the native picker there. Injection/capture errors are reported in the popup.
+- Restricted browser pages, extension stores, and other pages that prohibit script injection cannot use this overlay. Turn off continuous selection and use Advanced → Native screen picker there. Injection/capture errors are reported in the popup.
 - The captured PNG is passed directly to an isolated-world injected function, decoded as an ImageBitmap, and drawn in a closed shadow tree. It is not placed in local/session storage, a page-visible image URL, or a separate window.
 - The closed shadow tree prevents ordinary page DOM code from directly querying the screenshot canvas. It is not presented as a general security boundary against the browser or developer tools.
 - Constructed style sheets and bitmap decoding avoid relying on page inline-style or image-source policies. The screenshot is released when the overlay is removed; nothing is uploaded.
@@ -36,7 +36,7 @@ The modal overlay makes the underlying page inert during selection. Its own canv
 - `src/services/tabSelection.ts`: source checks, removal of a prior overlay, capture, active-tab validation, and explicit injection.
 - `src/content/overlay.ts`: self-contained injected functions, modal/shadow UI, magnifier, pixel mapping, queued persistence, and cleanup. All runtime helpers stay inside the injected function because Chrome serializes it without module imports.
 - `src/services/pickColor.ts`: native picking and the matching ten-color history policy. Keep both storage paths aligned when changing the policy.
-- Vite builds the popup and module background service worker. The old `src/snapshot/` window and session-transfer code have been removed.
+- Vite builds the popup and module background service worker, and includes the project license.
 
 ## Verification
 
@@ -49,7 +49,7 @@ Manual checklist:
 - With the switch off, verify Pick Color opens the same magnifier, saves one color, and exits only after successful storage. With it on, verify the same zoom stays open across multiple selections.
 - Expand Advanced and verify Native screen picker explicitly opens the browser EyeDropper, without capture injection when the switch is off; enabling continuous selection must disable the native button and show an explanation.
 - On a known flat-color page, enable continuous selection and confirm the overlay appears on the same tab, with no extra window.
-- Move across color boundaries and confirm the center pixel and preview HEX match the selected color. Repeat after page zoom and on a scaled display.
+- Move across color boundaries and confirm the center pixel and preview HEX match the selected color. At a text edge, click and hold the pointer still: preview and last-saved HEX should match after the save finishes. Repeat after page zoom and on a scaled display.
 - Click three colors rapidly; confirm the overlay/magnifier stays open and all colors are retained in newest-first order.
 - Use Move to next corner and sample the area formerly under the panel. Clicking the panel must not save a pixel.
 - Try a link/button underneath the screenshot; it must only select a color, not activate the source control.
@@ -57,9 +57,9 @@ Manual checklist:
 - Start again and confirm there is only one overlay, without old UI in the captured pixels.
 - Reopen the popup and copy a saved color explicitly. Restricted-page errors must leave the popup usable.
 
-## Integration
+## Related behavior
 
-This integration includes the ten-color history grid and shared CI/coverage workflows from main. Popup and overlay labels follow the English/Vietnamese preference; the overlay receives its translations when the session starts. Precision work beyond this basic magnifier remains deferred.
+The popup displays ten-color history and supports English/Vietnamese labels. The overlay receives a plain translation dictionary at session start. Advanced keyboard precision controls remain deferred; see [features](FEATURES.md), [localization](LOCALIZATION.md), and the [backlog](BACKLOG.md).
 
 ## Reload troubleshooting
 
@@ -69,7 +69,7 @@ If the popup reports that scripting permission is unavailable, reload the extens
 
 Requires Chrome/Edge 127+. Reload the extension itself after this update so its module service worker is registered. Pick one color with the main button: the popup closes during picking and reopens after a successful save. Cancel with Esc before picking: it reopens with the previous color. In continuous mode, save several colors and press Esc/Stop: it reopens only after those writes settle, with continuous mode still selected.
 
-If the source tab navigates/closes, the user changes tabs, the browser window loses focus, or the overlay is removed by viewport cleanup, the extension does not open a popup in an unrelated context. Return metadata expires after 30 minutes. If Chrome refuses action.openPopup, a dot badge is shown; click the icon manually to retrieve the saved color.
+If the source tab navigates/closes, the user changes tabs, the browser window loses focus, or the overlay is removed by viewport cleanup, the extension does not open a popup in an unrelated context. Return metadata older than 30 minutes cannot reopen a popup; expiry is checked when records are processed, not by a scheduled deletion timer. If Chrome refuses action.openPopup, a dot badge is shown; click the icon manually to retrieve the saved color.
 
 The worker uses a per-session random ID, source document/tab/window validation, and a launch-port handshake. No fixed reopen delay or automatic fallback to native is used. Native remains in Advanced, keeps the popup visible while selecting, and can cover screen content; the custom path is the recommended unobstructed workflow.
 

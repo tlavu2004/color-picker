@@ -8,23 +8,24 @@ The default Pick Color and continuous mode both capture the source tab and injec
 
 ## Source responsibilities
 
-- `src/components/`: popup coordination, the default-off continuous switch, and color-result/copy UI.
+- `src/components/`: popup coordination, language selection, the default-off continuous switch, recent-color history, and color-result/copy UI.
 - `src/styles/`: popup CSS.
+- `src/i18n/`: English/Vietnamese dictionaries, language resolution, and preference/document-language updates.
 - `src/services/pickColor.ts`: native picking and ten-color storage normalization, migration, and saving.
 - `src/services/tabSelection.ts`: prepare/capture/validate/inject orchestration and launch-port handshake.
 - `src/background/`: completion-message validation, session state, source lifecycle invalidation, and popup restoration.
 - `src/content/overlay.ts`: serialized stop/install functions with all runtime helpers enclosed; modal closed-shadow overlay, pixel magnifier, queued storage writes, and cleanup.
 - `tests/`: Vitest service, popup, and overlay tests with mocked browser/canvas APIs.
-- `scripts/verify-build.mjs`: verifies manifest, popup/icons, and built HTML entry assets.
+- `scripts/verify-build.mjs`: verifies manifest, popup/icons, built HTML entry assets, and the bundled project license.
 - `docs/guides/`: architecture, feature status, continuous-mode guide, and deferred precision investigation.
 
 ## Startup and selection
 
-The Native screen picker button under Advanced opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
+The Native screen picker button under Advanced is disabled while continuous selection is enabled. With continuous selection off, it opens EyeDropper during its button gesture and stores one normalized HEX; Escape preserves the prior result. Copy is explicit and retains its two-second disabled confirmation.
 
 Tab-picker startup queries the source tab, rejects unsupported URL schemes, removes an old overlay, captures the source window, checks the active tab is unchanged, and injects the PNG plus captured viewport dimensions. The injected function rejects changed or pinch-zoomed viewports. A loading timeout cleans up stalled image decoding.
 
-The image is decoded without a DOM image URL and drawn on a viewport-sized canvas inside a closed shadow root. A native modal dialog places the overlay above page content and makes underlying controls inert. Constructed styles isolate the picker layout from page CSS. Pointer movement updates a magnifier on animation frames; every click reads that click's captured coordinates directly instead of using a potentially stale preview.
+The image is decoded without a DOM image URL and drawn on a viewport-sized canvas inside a closed shadow root. A native modal dialog places the overlay above page content and makes underlying controls inert. Constructed styles isolate the picker layout from page CSS. Pointer movement updates the magnifier on animation frames. Selection preserves fractional pointer-release coordinates when compatibility click coordinates are rounded. The click handler cancels pending preview work, reads one sample, and uses it for both the displayed preview and the saved HEX. Subsequent pointer movement previews a new pixel; the saved-color status continues to show the last successful save.
 
 Continuous mode keeps the magnifier open after saving; a promise queue serializes its accepted writes. Single mode accepts only one click while saving and removes the overlay after success. A failed save unlocks single mode for retry without closing it. The panel provides status, error feedback, Stop, and Move to next corner; it never copies automatically. Esc/Stop removes the modal, screenshot, magnifier, listeners, timers, pending preview frame, and active-session callback. It restores previous focus. Viewport changes and pagehide also stop the session. Non-passive window capture listeners block wheel/touch gestures and are removed on exit; background/nested scroll events do not end a frozen-view session. Accepted writes may finish after visual cleanup.
 
@@ -40,11 +41,11 @@ The view is frozen, not the underlying application's execution. It does not trac
 
 ## Build and verification
 
-Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so the new scripting permission and popup code are applied. The old snapshot HTML/window entry and session transfer are removed.
+Run `npm run build` and load `dist/` unpacked. Reload after rebuilding so manifest and code changes are applied. Vite builds the popup and module service worker, and includes the root MIT license in `dist/LICENSE`.
 
 Run lint, test typechecking, Vitest, coverage, and `verify:build`. Coverage includes the popup, services, and injected module and excludes only the mounting entry. Tests include serialization of injected functions and DOM cleanup, but capture/injection/top-layer behavior still needs a real Chrome check.
 
-See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for branch scope, and the [backlog](BACKLOG.md) for deferred advanced precision work.
+See [continuous selection](CONTINUOUS_SELECTION.md) for behavior and manual checks, [feature status](FEATURES.md) for implemented and planned behavior, and the [backlog](BACKLOG.md) for deferred advanced precision work.
 
 `npm test` runs Vitest and React Testing Library with jsdom and mocked browser APIs. `npm run test:typecheck` checks test TypeScript. `npm run test:coverage` generates V8 coverage mapped to application source, excluding only the mounting entry. CI and release reuse `.github/workflows/verify.yml` on Node.js 24, selected through `.node-version`. Coverage is summarized in Actions. The verification job uploads a ZIP and SHA-256 checksum; the release job downloads and publishes that verified archive without rebuilding. See [testing and delivery](TESTING.md) for details and manual verification.
 
@@ -55,6 +56,7 @@ Chrome/Edge 127+ is required for action.openPopup. The action popup closes after
 Session metadata and the last custom mode are stored in in-memory storage.session, not screenshots. The worker validates extension, tab, frame, document ID, and random session ID; it consumes each completion once. It rechecks the source tab URL, active tab, and focused window before opening the popup. Navigation, tab closure/activation away, superseding sessions, viewport cleanup, and expired sessions do not request a popup in another context. Metadata allows normal worker restarts without losing a pending return.
 
 If Chrome refuses popup opening, saved colors remain intact and a dot badge allows a manual icon click. Opening the popup clears the badge. Native mode keeps the existing popup visible and is isolated in the collapsed Advanced section with an explanation of that limitation.
+
 ## Localization
 
 The language hook resolves Auto/English/Vietnamese and persists the preference separately from colors. Popup/history components receive translated labels. Tab selection passes a plain dictionary into the serialized overlay; no external runtime imports are required there. Color Picker remains the product name in every locale. See [localization](LOCALIZATION.md).

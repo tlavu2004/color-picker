@@ -29,7 +29,7 @@ No minimum percentage is enforced. The report measures mocked application behavi
 - `.node-version` selects Node 24 for both workflows and local version managers; package engines require 24.15.0+ within Node 24. This extension uses Node for build/test only, so multi-version runtime compatibility is not a project requirement.
 - **CI** runs on PRs targeting main, pushes to main, and manual dispatch. It does not also run on feature-branch pushes, avoiding duplicate push/PR runs. Stale runs for the same PR/ref are cancelled.
 - **Extension verification** is a reusable workflow called by CI and release. Its read-only job has a 15-minute timeout and runs `npm ci`, lint, test typechecking, tests/coverage, build, asset checks, ZIP packaging, and SHA-256 generation.
-- Coverage is shown in the Actions job summary and uploaded as an artifact. The package artifact contains `color-picker.zip` and its checksum, with `manifest.json` at the ZIP root. Download and extract the ZIP before using Load unpacked. Reports/packages are retained for 14 days.
+- Coverage is shown in the Actions job summary and uploaded as an artifact. The package artifact contains `color-picker.zip` and its checksum, with `manifest.json` and the project `LICENSE` at the ZIP root. Download and extract the ZIP before using Load unpacked. Reports/packages are retained for 14 days.
 - **Release package** runs only on a pushed `v*` tag. It calls the same verification workflow, then a separate publishing job (10-minute timeout) downloads that exact artifact, checks the tag against the verified manifest version, verifies SHA-256, and publishes the ZIP/checksum to a GitHub release. It never rebuilds the archive after verification.
 - Only the release publishing job has contents-write permission. No Chrome Web Store deployment, credential setup, or automatic tag creation is configured. The same-tag release concurrency group does not cancel an active publication.
 - Before releasing, update `public/manifest.json` and keep package metadata consistent. The prepared version is `1.0.0` in the manifest, package, and lockfile; its release tag is `v1.0.0`. Do not push a version tag until ready to publish.
@@ -48,17 +48,15 @@ Run `npm run coverage:summary` after coverage to preview the job summary locally
 7. Confirm Copied! appears only on the disabled button for two seconds, then returns to Copy; changing color clears confirmation.
 8. Verify up to ten swatches, selecting old colors without copying, clearing history, and migration from the old 50-entry history.
 
-## History and CI integration status
+## History regression checks
 
-The history and CI branches originally started at commit `a069d30`. CI has since been merged into `main` and incorporated together with history into this localization integration. The current service stores at most ten distinct colors; the old 50-color limit describes legacy data only.
+The service stores at most ten distinct colors. Fifty-color histories describe legacy migration inputs only. All cases in `tests/history.integration.test.tsx` should run; an unexpectedly skipped history suite needs investigation.
 
-`tests/pickColor.test.mjs` has been removed in favor of Vitest. The five cases in `tests/history.integration.test.tsx` run on this branch because its history service is present. A skipped history suite here should be investigated rather than treated as an expected baseline result.
+Use results from the current commit after resolving conflicts or changing behavior. Earlier test counts and coverage reports do not establish the state of a different build.
 
-Run all checks above after resolving merge conflicts and before completing the merge commit. Use that run's test counts and coverage results; earlier results from separate branches are not a substitute for checking the final merged tree. This localization integration preserves the ten-color service/UI, shared CI configuration, and all relevant tests when resolving conflicts.
+## Dependency review
 
-## Dependency audit
-
-Compatible dependency updates were applied while adding the test toolchain. The remaining npm audit findings are in development tooling (`typescript-eslint` and its transitive minimatch dependency). Do not use `npm audit fix --force` blindly: the reported remediation changes the toolchain outside the current compatible update. Review upgrades separately; these dependencies are not shipped in the browser bundle.
+Use `npm audit` to obtain current dependency findings; this document does not maintain a snapshot of audit results. Review the affected package, whether it reaches the browser bundle, and the proposed compatibility changes before upgrading. Do not run `npm audit fix --force` without reviewing the toolchain changes it proposes.
 
 ## Custom picker verification
 
@@ -66,17 +64,25 @@ The custom picker and worker tests cover capture/injection ordering, single and 
 
 ## Publish version 1.0.0
 
-1. Review and merge the release-preparation PR into `main`. Wait for CI on that main commit to pass.
+1. Review and merge the documentation PR into `main`. Wait for CI on that exact main commit to pass. The earlier v1.0.0 release and local/remote tags were removed before this review; publication must use the newly reviewed main commit, not the earlier commit.
 2. Download the verified CI package, extract it, and load it unpacked. Check English/Vietnamese/Auto, single and continuous selection, Esc/Stop and popup return, ten-color history, and explicit copying. Browser-native dialogs follow the browser language.
 3. Update the local main with a clean working tree:
 
    ```powershell
    git switch main
    git pull --ff-only origin main
+   git rev-parse HEAD origin/main
    ```
 
-4. Confirm `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Confirm the intended release commit is checked out and that `v1.0.0` does not already exist remotely. Never move an existing published version tag to another commit.
-5. Create and verify the signed tag, then push only that tag:
+4. Confirm both hashes above match the reviewed, CI-verified main commit. Check that `public/manifest.json`, `package.json`, and the root metadata in `package-lock.json` all contain version `1.0.0`. Verify the tag is still absent locally and remotely:
+
+   ```bash
+   git tag --list v1.0.0
+   git ls-remote --tags origin refs/tags/v1.0.0
+   ```
+
+   Both commands should produce no tag entries. If either finds an existing tag, stop and investigate instead of force-pushing it. Deleting a GitHub Release alone does not delete its tag.
+5. From the verified `main` commit, create and verify the new signed tag, then push only that tag:
 
    ```bash
    git tag -s v1.0.0 -m "Color Picker v1.0.0"
@@ -87,4 +93,4 @@ The custom picker and worker tests cover capture/injection ordering, single and 
 6. The tag push starts Release package. It verifies the tagged commit, checks the tag matches the manifest, and publishes the verified ZIP and SHA-256 checksum to GitHub Releases. Let the workflow create the release; do not manually pre-create one with the same tag.
 7. Confirm the workflow succeeded and both assets are present. Users extract the ZIP and load that folder unpacked; this does not install or publish the extension through Chrome Web Store.
 
-The preparation branch does not create a tag or publish a release. Precision controls and the proposed `.node-version` cleanup remain deferred.
+Documentation branches do not publish a release. Advanced precision controls remain deferred. The `.node-version` review is resolved: retain the file as shared Node configuration. See the [backlog](BACKLOG.md).
