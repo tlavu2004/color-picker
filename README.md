@@ -184,7 +184,7 @@ GitHub Actions verifies PRs targeting main and pushes to main on Node.js 24, usi
 
 ## Author
 
-Developed and maintained by **Trương Lê Anh Vũ** — [tlavu2004](https://github.com/tlavu2004).
+Developed and maintained by **Trương Lê Anh Vũ** — [@tlavu2004](https://github.com/tlavu2004).
 
 ## Contributing
 
